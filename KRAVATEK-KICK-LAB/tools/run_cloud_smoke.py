@@ -42,11 +42,11 @@ def main():
             (output / 'application.log').write_text(result.stdout + result.stderr)
             result.check_returncode()
             report = json.loads(report_path.read_text())
-            if report.get('result') != 'passed' or report.get('theme') != 'neon-retro':
+            if report.get('result') != 'passed' or report.get('theme') != 'kravatek-instrument-002':
                 raise RuntimeError('GUI test did not pass')
             # A screenshot must be one complete PNG, including on repeated runs.
             # FileOutputStream otherwise appends to an existing screenshot by default.
-            png = (output / 'prototype-001.png').read_bytes()
+            png = (output / 'prototype-002.png').read_bytes()
             if not png.startswith(b'\x89PNG\r\n\x1a\n'):
                 raise RuntimeError('Screenshot is not PNG')
             offset = 8

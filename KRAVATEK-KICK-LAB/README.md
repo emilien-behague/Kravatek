@@ -1,65 +1,61 @@
-# KRAVATEK KICK LAB — PROTOTYPE 001
+# KRAVATEK KICK LAB — 0.2
 
-**KEEP THE DNA. MUTATE THE SOUND.**
+**KEEP THE DNA. EVOLVE THE SOUND.**
 
-Premier synthétiseur de kick autonome, en C++20 et JUCE. Le son est calculé depuis une sinusoïde : aucun sample externe. La cible utilisateur est Windows 10/11 x64. Ce prototype n'est pas encore un plugin VST3.
+Instrument autonome de synthèse de kicks pour Windows 10/11 x64, en C++20/JUCE. La 0.2 ajoute un moteur multicouche, 24 paramètres, huit bases sonores, des enveloppes éditables et une exploration reproductible. Aucun sample externe n'est nécessaire.
 
-![Interface réelle du prototype : bleu électrique, cyan et rose, cadres rétro, onde synthétisée et réglages fonctionnels.](docs/images/prototype-001-neon.png)
+![Interface réelle KRAVATEK 0.2](docs/images/instrument-002.png)
 
-La direction visuelle suit la référence du créateur : [style néon et fenêtres rétro](docs/DESIGN.md).
+## Démarrer sous Windows
 
-## Utiliser le prototype sous Windows
+1. Ouvre [GitHub Actions](https://github.com/emilien-behague/Kravatek/actions), puis la dernière exécution **Windows instrument 0.2** réussie.
+2. Télécharge **KRAVATEK-KICK-LAB-Windows-x64** dans **Artifacts**, en étant connecté à GitHub.
+3. Décompresse l'archive et double-clique sur **KravatekKickLab.exe**. Aucun code à modifier, aucune installation de JUCE à effectuer.
 
-Si vous avez reçu le paquet Windows, décompressez-le et double-cliquez sur **KravatekKickLab.exe**. Aucun fichier de code n'est à modifier.
+Le paquet contient l'application, huit WAV d'exemple dans `Examples`, le guide `LIRE-MOI.md` et l'outil développeur `kravatek-render.exe`. Le [rapport de validation](docs/VALIDATION.md) distingue compilations exécutées et vérifications restantes.
 
-| Commande | Fonction |
+## Créer et retrouver un son
+
+| Commande | Action réelle |
 | --- | --- |
-| PLAY | Écoute le kick affiché. Un nouveau clic éteint brièvement la lecture précédente avant de relancer. |
-| GENERATE | Crée une variation et affiche sa nouvelle graine. |
-| PITCH END | Change la fréquence finale, de 30 à 90 Hz. |
-| DECAY | Change la durée totale de décroissance, de 100 à 800 ms. |
-| EXPORT WAV | Enregistre le kick affiché en WAV mono PCM 24 bits / 48 kHz. Choisir un nom terminé par `.wav`. |
-| SEED | Entrer une graine entre 0 et 4294967295, puis appuyer sur Entrée pour restaurer sa variation de base. |
-| AUDIO | Choisit une sortie du système ou réessaie la sortie par défaut. |
+| Famille | Charge une base fixe : Foundation, Warehouse, Hard Psy, Schranz, Hardcore, Deep, Experimental ou Mutant |
+| PLAY / espace | Écoute le rendu ; en LOOP, un deuxième appui arrête |
+| PITCH / AMP | Affiche la courbe du body. Glisse les trois points pour régler le pitch ou l'amplitude ; WAVE affiche/masque le rendu final |
+| Six modules | Pitch, amplitude, corps harmonique/FM-PM, tail indépendante, filtre/waveshaping, attaque et sub propre |
+| GENERATE | Nouvelle base à partir de la famille, de NOVELTY et d'une nouvelle graine |
+| REGENERATE | Reproduit famille + graine saisie + NOVELTY ; les éditions manuelles exigent une sauvegarde complète |
+| NOVELTY | Ouvre progressivement des régions de paramètres expérimentales ; ce n'est pas une mesure de l'originalité |
+| EVOLVE | Transforme le son courant selon son amplitude d'évolution et les groupes DNA déverrouillés |
+| LOCK | Conserve le groupe de paramètres pendant EVOLVE. LOCK SUB protège aussi la fréquence finale et la durée totale |
+| STORE A puis A/B | Mémorise A ; après une modification, alterne A et B avec RMS de préécoute ajusté sur 400 ms |
+| History | Rappelle jusqu'à 24 états de génération de la session ; cette liste n'est pas conservée après fermeture |
+| SAVE / OPEN | Sauvegarde/recharge tous les paramètres, graines, verrous, NOVELTY et tempo dans un preset JSON |
+| EXPORT WAV | Exporte le son courant en mono PCM 24 bits / 48 kHz, crête −3 dBFS ; choisir un nom `.wav` |
+| AUDIO | Choisit/réessaie une sortie audio du système |
 
-La graine **1** restaure la référence : 170 → 52 Hz, descente principale de 60 ms, durée de 320 ms. Après GENERATE, les modifications manuelles de PITCH END et DECAY complètent la graine ; la graine seule restaure les valeurs de base. Les paramètres complets sont inscrits dans les métadonnées du WAV.
+Chaque potentiomètre propose une valeur éditable et une infobulle en français. Sur petit écran, des barres de défilement gardent les commandes accessibles. Le spectre, la crête, le RMS et la durée proviennent du signal calculé. **F0 TARGET** est la fréquence finale demandée au moteur, pas une détection automatique de fondamentale.
 
-La forme d'onde représente le rendu exporté. La lecture utilise le même moteur, recalculé à la fréquence réelle de la sortie audio. Le niveau de crête reste à −3 dBFS.
+Le gain A/B concerne uniquement la préécoute. L'export conserve le rendu d'origine. Le RMS ajusté ne constitue pas une mesure LUFS de sonie perceptuelle. Les interactions et la normalisation du mix peuvent modifier le niveau relatif d'une couche dont les paramètres sont verrouillés.
 
-Pour utiliser un kick dans **FL Studio**, faites glisser le fichier WAV exporté dans un Sampler ou dans la Playlist. La lecture dans FL Studio et sur un périphérique physique reste à valider par écoute.
+Pour FL Studio : glisse un WAV exporté dans un Sampler ou la Playlist. Cette version est autonome ; elle ne s'installe pas comme VST3.
 
-## Obtenir l'exécutable sans compiler sur votre ordinateur
+## Ce qu'il reste à tester avec le créateur
 
-Le dépôt contient une compilation **GitHub Actions / Windows 2022 / Visual Studio 2022 / MSVC x64** dans `.github/workflows/windows.yml`. Elle devient utilisable après publication des sources sur GitHub.
+- Comparer Deep, Hard Psy, Schranz, Experimental et Mutant sur la même écoute et dans un morceau.
+- Vérifier la place du kick Hard Psy avec une bassline rapide et la netteté du grave Deep.
+- Verrouiller SUB et ATTACK, faire évoluer la tail, puis comparer A/B.
+- Sauvegarder un son modifié, le rouvrir et exporter vers FL Studio.
+- Vérifier la sortie audio et le dialogue natif d'export sur le PC Windows.
 
-1. Ouvrir le dépôt GitHub, puis **Actions**.
-2. Ouvrir **Windows prototype** et sélectionner une exécution terminée avec succès. Une publication de code déclenche automatiquement la compilation.
-3. Dans **Artifacts**, télécharger **KRAVATEK-KICK-LAB-Windows-x64**.
-4. Décompresser l'archive, puis ouvrir **KravatekKickLab.exe**.
+PROMPT-TO-KICK est explicitement indisponible. Enveloppes multipoints libres, import de samples, banque persistante, traitement multibande et plugin restent des développements futurs. Aucune équivalence avec un produit commercial ni validation subjective de qualité sonore n'est revendiquée.
 
-Le paquet contient l'application, un outil d'export en ligne de commande et un kick de référence. Les tests DSP et un test fonctionnel de l'interface doivent réussir avant la création du paquet. La présence de la configuration ne prouve pas qu'une compilation Windows a déjà été exécutée : voir le [rapport de validation](docs/VALIDATION.md).
+## Architecture et validation
 
-## Compilation Windows locale
+L'[audit de la 001](docs/AUDIT-002.md) explique les limites et le périmètre retenu. L'[architecture DSP](docs/ARCHITECTURE.md), le [contrat d'exploration](docs/EXPLORATION.md) et la [direction graphique](docs/DESIGN.md) détaillent ce qui fonctionne réellement.
 
-Prérequis : Git, **Visual Studio 2022** avec **Développement Desktop en C++**, MSVC v143, Windows SDK 10/11 et CMake ≥ 3.22. L'installation de ces outils n'est pas effectuée automatiquement.
+Le moteur conserve une référence sinusoïdale propre, ajoute FM/PM, harmoniques, bruit d'attaque, saturation tanh/sine-fold suréchantillonnée, tail modulée, filtre résonant à topologie préservée et sub à fréquence fixe. Le callback audio utilise des buffers préalloués, sans allocation ni verrou.
 
-Double-cliquer sur **build-windows.cmd** dans ce dossier. Le script configure, compile et teste. Il indique l'emplacement de l'application :
-
-```text
-KRAVATEK-KICK-LAB/build/windows-x64/Release/KravatekKickLab.exe
-```
-
-Pour un développeur, les commandes équivalentes sont :
-
-```powershell
-cmake --preset windows-x64
-cmake --build --preset windows-release
-ctest --preset windows-release
-```
-
-JUCE est téléchargé depuis son dépôt officiel, à un commit fixé. MinGW n'est pas pris en charge par la version JUCE retenue.
-
-## Développement et vérification dans ce cloud Linux
+## Développer dans le cloud
 
 Depuis `/workspace/Kravatek/KRAVATEK-KICK-LAB` :
 
@@ -68,11 +64,9 @@ python3 tools/setup_cloud.py
 python3 tools/run_cloud_smoke.py
 ```
 
-Le premier script prépare CMake, Ninja, JUCE et les en-têtes de développement dans `/workspace/.kravatek-tools`, compile `build-linux/KravatekKickLab` et exécute les 14 tests. Il télécharge des paquets Debian signés et les extrait localement ; il n'installe rien dans le système. Les vérifications TLS, signatures et sommes de contrôle restent actives.
+Les outils sont installés localement dans `/workspace/.kravatek-tools`. Le premier script compile puis lance les 22 tests. Le second utilise temporairement Xvfb et une sortie ALSA silencieuse, vérifie les interactions et produit `out/cloud-smoke/gui-smoke.json` et `prototype-002.png`. Il n'effectue aucune écoute physique.
 
-Le second script démarre temporairement un affichage virtuel et une sortie ALSA silencieuse, teste les commandes de l'interface et l'export, puis arrête son affichage. Résultats : `out/cloud-smoke/`. Ce contrôle ne remplace pas une écoute réelle.
-
-Le moteur et les tests peuvent aussi être compilés sans JUCE :
+Sans interface/JUCE :
 
 ```bash
 cmake --preset dsp-only
@@ -80,24 +74,26 @@ cmake --build --preset dsp-release
 ctest --preset dsp-release
 ```
 
-Exemple de rendu, depuis le dossier du projet :
+Rendu par le même moteur :
 
 ```bash
-build-linux/kravatek-render --seed 1 --output out/kick.wav
-build-linux/kravatek-render --seed 424242 --pitch-end 57 --decay 400 --output out/variation.wav
+build-linux/kravatek-render --style deep --seed 1 --output out/deep.wav
+build-linux/kravatek-render --style mutant --seed 424242 --novelty .85 --tail .7 --output out/mutant.wav
+build-linux/kravatek-render --help
 ```
 
-Sans `--seed`, l'outil utilise également la référence. La reproductibilité exacte concerne les mêmes paramètres, la même graine, la même fréquence et les mêmes conditions de calcul ; les bibliothèques mathématiques de deux plateformes peuvent différer aux derniers bits.
+Les temps de la CLI sont en millisecondes ; niveaux, morphs et NOVELTY sont en unités 0..1. Les paramètres complets sont inscrits dans les métadonnées du WAV. La reproductibilité binaire concerne une même plateforme et les mêmes conditions mathématiques.
 
-## Structure et versions
+## Compiler Windows localement
 
-- `src/dsp/` : moteur, oscillateur, variations déterministes, lecture et export WAV, sans dépendance JUCE.
-- `src/app/` : application JUCE, sorties audio, contrôles et forme d'onde.
-- `src/cli/` : export du même moteur sans interface.
-- `tests/` : tests de synthèse, sécurité audio, WAV et lecture concurrente.
-- `tools/` : préparation et test du cloud.
-- `docs/` : architecture et résultats réels.
+Prérequis : Visual Studio 2022, charge **Développement Desktop en C++**, MSVC v143, Windows SDK, Git et CMake ≥3.22. Double-cliquer sur `build-windows.cmd` ; le résultat est `build/windows-x64/Release/KravatekKickLab.exe`. Ces outils ne sont pas installés automatiquement sur le PC.
 
-Versions retenues : C++20, JUCE **8.0.16-security** (`ea77444750de45e036e0279bb0291144bf8e3688`), CMake **3.31.6**, Ninja **1.11.1.4**. GCC **14.2.0** a servi à la validation Linux. La cible Windows utilise Visual Studio 2022 / MSVC v143 ; sa version précise sera inscrite dans le journal GitHub Actions lors de l'exécution.
+```powershell
+cmake --preset windows-x64
+cmake --build --preset windows-release
+ctest --preset windows-release
+```
 
-JUCE est une dépendance externe sous licence AGPLv3 ou commerciale : [conditions officielles JUCE 8](https://juce.com/legal/juce-8-licence/). Aucun choix de licence pour les sources propres à KRAVATEK n'est effectué par ce prototype.
+Versions : JUCE **8.0.16-security**, commit `ea77444750de45e036e0279bb0291144bf8e3688` ; CMake **3.31.6**, Ninja **1.11.1.4**, GCC **14.2** pour ce cloud. MinGW n'est pas supporté par JUCE. La version 001 reste dans Git sous `archive/prototype-001`.
+
+JUCE relève de sa licence AGPLv3 ou commerciale : [conditions JUCE 8](https://juce.com/legal/juce-8-licence/). Aucun choix de licence pour les sources propres à KRAVATEK n'est ajouté ici.

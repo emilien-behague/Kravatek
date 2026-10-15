@@ -9,7 +9,7 @@ static_assert(std::atomic<bool>::is_always_lock_free);
 
 Playback::Playback() = default;
 
-bool Playback::queue(std::span<const float> samples) noexcept {
+bool Playback::queue(std::span<const float> samples, std::size_t loopPeriodFrames) noexcept {
     if (samples.empty() || samples.size() > maxSamples)
         return false;
     for (int i = 0; i < static_cast<int>(slots_.size()); ++i) {
@@ -19,12 +19,19 @@ bool Playback::queue(std::span<const float> samples) noexcept {
             continue;
         std::copy(samples.begin(), samples.end(), slot.samples.get());
         slot.size = samples.size();
+        slot.loopPeriod = loopPeriodFrames;
         const auto replaced = mailbox_.exchange(i, std::memory_order_acq_rel);
         if (replaced >= 0)
             slots_[static_cast<std::size_t>(replaced)].free.store(true, std::memory_order_release);
         return true;
     }
     return false; // Bounded, nonblocking overload policy: leave the pending command intact.
+}
+
+void Playback::stop() noexcept {
+    const auto replaced = mailbox_.exchange(-2, std::memory_order_acq_rel);
+    if (replaced >= 0)
+        slots_[static_cast<std::size_t>(replaced)].free.store(true, std::memory_order_release);
 }
 
 void Playback::release(int& index) noexcept {
@@ -42,7 +49,10 @@ void Playback::promote() noexcept {
 
 void Playback::process(float* const* outputs, int channels, int frames) noexcept {
     const auto pending = mailbox_.exchange(-1, std::memory_order_acq_rel);
-    if (pending >= 0) {
+    if (pending == -2) {
+        release(next_);
+        if (current_ >= 0 && fadeRemaining_ == 0) fadeRemaining_ = fadeSamples_;
+    } else if (pending >= 0) {
         release(next_);
         next_ = pending;
         if (current_ < 0) promote();
@@ -52,7 +62,13 @@ void Playback::process(float* const* outputs, int channels, int frames) noexcept
         float value = 0.0f;
         if (current_ >= 0) {
             auto& slot = slots_[static_cast<std::size_t>(current_)];
-            value = slot.samples[position_++];
+            value = position_ < slot.size ? slot.samples[position_] : 0.0f;
+            if (slot.loopPeriod > 0 && position_ < slot.loopPeriod) {
+                const auto remaining = slot.loopPeriod - 1 - position_;
+                if (remaining < static_cast<std::size_t>(fadeSamples_))
+                    value *= static_cast<float>(remaining) / static_cast<float>(fadeSamples_);
+            }
+            ++position_;
             if (fadeRemaining_ > 0) {
                 value *= static_cast<float>(fadeRemaining_ - 1) / static_cast<float>(fadeSamples_);
                 --fadeRemaining_;
@@ -61,9 +77,14 @@ void Playback::process(float* const* outputs, int channels, int frames) noexcept
                     promote();
                 }
             }
-            if (current_ >= 0 && position_ >= slots_[static_cast<std::size_t>(current_)].size) {
-                release(current_);
-                promote();
+            if (current_ >= 0) {
+                const auto& playing = slots_[static_cast<std::size_t>(current_)];
+                if (playing.loopPeriod > 0) {
+                    if (position_ >= playing.loopPeriod) position_ = 0;
+                } else if (position_ >= playing.size) {
+                    release(current_);
+                    promote();
+                }
             }
         }
         for (int channel = 0; channel < channels; ++channel)

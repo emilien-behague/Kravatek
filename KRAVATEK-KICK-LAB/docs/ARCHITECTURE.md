@@ -1,33 +1,29 @@
-# Architecture du prototype 001
+# Architecture 0.2
 
-## Synthèse indépendante de l'interface
+## Moteur sans JUCE
 
-`KickParameters` décrit le son. `renderKick()` renvoie un `RenderedKick` mono et ne dépend ni de JUCE ni d'un périphérique. Ce module peut être réutilisé dans un futur VST3 ; le prototype actuel calcule le kick hors du callback audio.
+`KickSynth` conserve la voie sinusoïdale de référence. Les paramètres sont validés avant allocation/rendu. Toutes les phases commencent à zéro ; le générateur entier de bruit et les mutations sont déterministes. Les bibliothèques mathématiques peuvent produire des différences de derniers bits entre plateformes.
 
-L'oscillateur additionne les incréments de phase et conserve sa phase quand la fréquence change. La fréquence suit `end + (start - end) × exp(-ln(100) × t / pitchDrop)`. À 60 ms, 99 % de la descente est effectuée. Une attaque en demi-cosinus, une décroissance exponentielle et une extinction finale en demi-cosinus encadrent le son.
+La voie enrichie fonctionne à 4 fois la fréquence de sortie, ou 8 fois en dessous de 24 kHz :
 
-Le rendu retire le décalage DC à l'aide d'une correction pondérée par la même enveloppe, ce qui conserve les extrémités silencieuses. Une normalisation hors ligne fixe la crête à −3 dBFS. Aucun limiteur, compresseur ou traitement de distorsion n'est utilisé. Les paramètres non finis ou hors des plages prises en charge sont rejetés.
+1. Pitch paramétrique du body ; modulation combinée de fréquence et phase par un oscillateur à ratio 1,73, avec décroissance indépendante. Partiels impairs 3/5/7.
+2. Transitoire bruité filtré, enveloppe de body avec attaque et extinction cosinus, décroissance à courbure réglable.
+3. Saturation tanh et morphing vers un sine-fold borné.
+4. Tail à oscillateur propre : ratio, extinction, rebond de pitch, interaction de phase avec le body et drive évolutif. Montée cosinus de 12 ms.
+5. Passe-bas résonant à topologie préservée sur body et tail. Damping positif, cutoff borné et sweep exponentiel.
+6. Sub sinusoïdal à la fondamentale cible, mixé **après** le filtre, avec extinction indépendante.
+7. Filtre FIR Blackman centré puis décimation ; tapers de bord, correction DC pondérée et normalisation de crête à −3 dBFS.
 
-Les graines utilisent un générateur entier déterministe fixé dans les sources. La graine 1 est réservée au kick de référence. Les variations touchent légèrement le pitch initial, le pitch final, le temps de descente, la durée et l'attaque. Les deux valeurs visibles sont arrondies à la résolution de leurs contrôles.
+Le suréchantillonnage est justifié par une régression spectrale sur saturation ; il ne garantit pas l'absence d'aliasing sur toute combinaison extrême. Le filtre FIR atténue aussi la zone haute (coupure de conception à 0,4 fois la fréquence de sortie). La correction DC et la normalisation portent sur le mix final : verrouiller une couche ne garantit pas sa stricte égalité dans un mix qui change de gain ou d'interaction. Le test d'isolation vérifie son indépendance lorsque le sub est écouté seul.
 
-## Lecture et concurrence
+`Variations` sépare presets, mutation, génération et évolution. Voir [le contrat d'exploration](EXPLORATION.md).
 
-Le thread de l'interface calcule un rendu à 48 kHz pour l'affichage/export et, si nécessaire, un rendu du même moteur à la fréquence réelle du périphérique. Aucun rééchantillonnage approximatif par saut d'indices n'est effectué.
+`Analysis` calcule crête, RMS sur la durée totale, DC, durée et FFT radix-2 de 8192 points, fenêtre Hann sur le début du kick, affichage logarithmique de 64 bandes (maximum spectral de chaque bande, dBFS, plancher −120). La fréquence affichée comme F0 TARGET est la consigne du moteur : aucun détecteur de fondamentale polyphonique n'est revendiqué.
 
-`Playback` préalloue trois buffers de deux secondes à 192 kHz au démarrage. Une boîte aux lettres atomique transfère la propriété d'un buffer du producteur GUI au consommateur audio. Le producteur ne réécrit pas un buffer utilisé par le consommateur. Le callback copie seulement des échantillons et met à jour des atomiques : aucune allocation, libération, entrée/sortie fichier ou prise de verrou.
+## Lecture et application
 
-Lors d'un nouveau PLAY, la voix courante s'éteint en 5 ms avant le redémarrage du nouveau kick. Les clics intermédiaires remplacent la commande en attente. En cas de saturation temporaire des trois buffers, une nouvelle commande est refusée et l'interface le signale ; les buffers actifs restent intacts. Le son n'est pas empilé avec lui-même.
+`Playback` possède ses buffers avant le callback, communique par atomiques et ne verrouille ni n'alloue pendant le traitement audio. La boucle insère du silence jusqu'au prochain temps ; une tail dépassant ce temps est lissée sur les 5 dernières ms. STOP et retrigger utilisent une courte extinction. Les tests couvrent le séquencement et la concurrence.
 
-La classe s'utilise avec un seul producteur et un seul consommateur. `reset()` et `setSampleRate()` se font pendant l'arrêt du callback, via les événements de changement du périphérique JUCE. Le producteur peut encore publier une commande pendant `reset()`.
+Le rendu hors ligne est effectué sur le thread d'interface, coalescé par un timer de 30 ms, hors callback. C'est une limite de réactivité à surveiller pour les futurs moteurs plus coûteux. L'export utilise le rendu 48 kHz ; la préécoute recalcule le même moteur à la fréquence réelle du périphérique. A/B compare le RMS sur 400 ms avec silence ajouté pour les kicks plus courts ; seul le plus fort est atténué, sans amplification. Cela égalise l'énergie de cette fenêtre, pas la sonie perceptuelle LUFS.
 
-## Export
-
-`writeWav24()` reçoit le rendu affiché et écrit un RIFF/WAVE PCM mono 24 bits à 48 kHz. Les échantillons sont arrondis sur 24 bits, sans dither aléatoire. Un chunk standard `LIST/INFO/ICMT` contient du JSON avec le numéro du moteur, la graine et tous les paramètres. Les tailles et bourrages RIFF, y compris les nombres d'échantillons impairs, sont testés.
-
-Le code de lecture et l'export consomment les sorties de `renderKick()` ; aucun second algorithme de synthèse n'est utilisé. Les noms de fichiers Unicode sont transmis avec leur représentation native à l'exporteur. L'interface signale les erreurs d'écriture et laisse la confirmation d'écrasement au sélecteur de fichiers.
-
-## Limites de la mission
-
-Pas de samples externes, de distorsion, de séquenceur, de MIDI, de VST3 ou de système complet de presets. L'édition de la graine restaure sa variation de base ; les deux réglages manuels doivent aussi être conservés pour retrouver une variation modifiée. Le WAV contient ces informations, mais l'application ne recharge pas encore un preset depuis un WAV.
-
-Le test graphique utilise les mêmes gestionnaires que les contrôles visibles et vérifie un véritable fichier exporté. Le dialogue natif de sauvegarde et le routage physique Windows nécessitent encore une validation sur une machine Windows.
+`PresetState` sérialise tous les paramètres et graines, verrous, famille, tempo, NOVELTY et EVOLVE avec un schéma versionné et 17 chiffres de précision. L'import refuse les types invalides, champs absents et valeurs hors plages de l'éditeur avant de toucher l'état courant. L'historique contient 24 états de session, sauvegardables individuellement ; il n'est pas une base de données persistante.

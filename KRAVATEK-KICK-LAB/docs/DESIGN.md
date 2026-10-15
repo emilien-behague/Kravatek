@@ -1,22 +1,13 @@
-# Direction visuelle validée pour le développement
+# Identité KRAVATEK 0.2
 
-Le créateur a fourni une référence d'interface le 15 octobre 2026. Les versions suivantes doivent conserver son esthétique : fond bleu électrique quadrillé, cyan et rose néon, cadres de fenêtres rétro, logo pixel, pictogrammes géométriques et potentiomètres lumineux.
+La mission 002 remplace le traitement néon de la 001 par une identité d'instrument industriel. La référence rose/cyan demeure dans les couleurs fonctionnelles de l'onde et des enveloppes. Le fond graphite, les panneaux mats, le cartouche jaune KRAVATEK et les repères numérotés portent la hiérarchie. Aucun halo ni faux panneau décoratif.
 
-Le prototype utilise cette direction pour ses commandes réelles : PLAY, GENERATE, EXPORT WAV, AUDIO, PITCH END, DECAY et restauration d'une graine. L'onde calculée est rose ; la courbe de fréquence réellement utilisée par le moteur est cyan. Le panneau SYNTH DNA affiche les valeurs du rendu courant. Les boutons de fenêtre du cadre principal assurent les vraies actions réduire, agrandir et fermer.
+- Header : marque, famille, ouverture/sauvegarde, PLAY, GENERATE, EVOLVE et export.
+- Centre : onde réellement exportée et courbe du **body** ; trois poignées pilotent les paramètres du calcul.
+- Modules : pitch, amplitude du body, corps harmonique, tail, filtre/waveshaping, attaque/sub. Chaque valeur est éditable au clavier, chaque commande a une infobulle.
+- Moniteur : historique des générations de la session, STORE A/A-B, durée, fondamentale **cible**, mesures du rendu et spectre. Le spectre n'est pas une animation décorative.
+- Exploration : tempo, NOVELTY, amplitude EVOLVE, verrou SUB, graine et régénération. Le prompteur est explicitement marqué indisponible.
 
-| Élément | Couleur |
-| --- | --- |
-| Bleu de fond | `#090D71` |
-| Intérieur des graphes | `#080B48` |
-| Panneaux | `#10145D` |
-| Cyan | `#09E9FF` |
-| Rose | `#FF72EE` |
-| Texte principal | `#F3E8FF` |
+Les verrous concernent EVOLVE. GENERATE et REGENERATE repartent d'une famille. Les presets JSON conservent le résultat exact d'une édition ou d'une évolution.
 
-Le dessin est effectué directement par JUCE dans `src/app/NeonStyle.h`. Aucun fichier graphique externe n'est nécessaire au fonctionnement. Le moteur audio reste indépendant du thème.
-
-Les modules supplémentaires visibles dans la référence (distorsion, macros, séquenceur, comparateur, bibliothèque de presets) appartiennent à la vision future. Ils ne sont pas présentés comme des fonctions disponibles dans la mission 001. Les graphes montrent les données calculées ; l'édition du pitch et de la durée se fait avec les deux potentiomètres du prototype.
-
-Capture réelle, produite par le test de l'application :
-
-![KRAVATEK KICK LAB — prototype néon](images/prototype-001-neon.png)
+Un viewport avec défilement garde une surface d'instrument d'au moins 1100 × 860 pixels ; sur un petit écran, les commandes restent accessibles sans écraser le graphe. Les contrastes et les boîtes de valeurs priment sur les effets de style. L'appréciation artistique de cette refonte reste à faire avec le créateur.

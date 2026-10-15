@@ -1,4 +1,5 @@
 #include "dsp/KickSynth.h"
+#include "dsp/Analysis.h"
 #include "dsp/Playback.h"
 #include "dsp/WavWriter.h"
 
@@ -6,6 +7,7 @@
 #include <array>
 #include <atomic>
 #include <cmath>
+#include <chrono>
 #include <fstream>
 #include <functional>
 #include <iostream>
@@ -253,6 +255,192 @@ void concurrency() {
     check(valid, "Concurrent PLAY corrupted audio");
     check(accepted > 0, "No concurrent command executed");
 }
+
+void soundFamilies() {
+    std::vector<float> previous;
+    const auto started = std::chrono::steady_clock::now();
+    for (int style = 0; style < static_cast<int>(kravatek::KickStyle::count); ++style) {
+        for (auto rate : {8000., 44100., 48000., 96000., 192000.}) {
+            const auto p = kravatek::factoryPreset(static_cast<kravatek::KickStyle>(style));
+            auto k = kravatek::renderKick(p, rate);
+            safe(k);
+            if (rate == 48000) {
+                check(k.samples != previous, "Factory sounds are identical");
+                check(k.samples == kravatek::renderKick(p, rate).samples, "Coloured rendering is not repeatable");
+                previous = k.samples;
+            }
+        }
+    }
+    for (std::uint32_t seed = 0; seed < 32; ++seed) {
+        auto p = kravatek::seededPreset(static_cast<kravatek::KickStyle>(seed % static_cast<int>(kravatek::KickStyle::count)), seed);
+        safe(kravatek::renderKick(p));
+    }
+    std::cout << "Factory and mutation rendering ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now() - started).count() << '\n';
+}
+
+void dnaLocks() {
+    const auto base = kravatek::factoryPreset(kravatek::KickStyle::hardTechno);
+    const auto audio = kravatek::renderKick(base).samples;
+    const auto locked = kravatek::mutate(base, 929, .8, {true, true, true, true, true, true, true});
+    check(kravatek::renderKick(locked).samples == audio, "DNA locks changed the sound");
+    check(kravatek::renderKick(kravatek::mutate(base, 929, 0)).samples == audio, "Zero mutation changed the sound");
+    const auto p = kravatek::mutate(base, 929, .8, {true, false, false, true});
+    check(p.startHz == base.startHz && p.endHz == base.endHz && p.pitchDropSeconds == base.pitchDropSeconds
+        && p.pitchCurve == base.pitchCurve, "Pitch DNA changed");
+    check(p.clickLevel == base.clickLevel && p.clickSeconds == base.clickSeconds && p.transientSeed == base.transientSeed,
+        "Transient DNA changed");
+    check(p.driveDb != base.driveDb || p.ampCurve != base.ampCurve, "Unlocked DNA did not mutate");
+    check(kravatek::renderKick(p).samples == kravatek::renderKick(kravatek::mutate(base, 929, .8, {true,false,false,true})).samples,
+        "Mutation is not reproducible");
+    rejects([&] { kravatek::mutate(base, 5, std::numeric_limits<double>::quiet_NaN()); });
+    auto invalid = base; invalid.driveDb = 31;
+    rejects([&] { kravatek::renderKick(invalid); });
+    invalid = base; invalid.fmAmount = std::numeric_limits<double>::infinity();
+    rejects([&] { kravatek::renderKick(invalid); });
+}
+
+double spectralMagnitude(const std::vector<float>& samples, double frequency, int first, int count) {
+    double real = 0, imaginary = 0;
+    for (int i = 0; i < count; ++i) {
+        const auto window = .5 - .5 * std::cos(2 * std::numbers::pi * i / (count - 1));
+        const auto phase = 2 * std::numbers::pi * frequency * i / 48000;
+        real += samples[static_cast<std::size_t>(first + i)] * window * std::cos(phase);
+        imaginary -= samples[static_cast<std::size_t>(first + i)] * window * std::sin(phase);
+    }
+    return std::hypot(real, imaginary);
+}
+
+void saturation() {
+    kravatek::KickParameters p;
+    p.startHz = p.endHz = 50; p.durationSeconds = .6; p.ampCurve = 1.7;
+    auto clean = kravatek::renderKick(p);
+    p.driveDb = 24;
+    auto driven = kravatek::renderKick(p);
+    safe(driven);
+    const auto cleanHarmonic = spectralMagnitude(clean.samples, 150, 4800, 9600);
+    const auto drivenHarmonic = spectralMagnitude(driven.samples, 150, 4800, 9600);
+    check(drivenHarmonic > cleanHarmonic * 20 + 1, "Saturation has no audible harmonic effect");
+    p.startHz = p.endHz = 1800; p.durationSeconds = 1; p.ampCurve = 3; p.driveDb = 30;
+    auto high = kravatek::renderKick(p);
+    const auto alias = spectralMagnitude(high.samples, 600, 1440, 19200);
+    const auto fundamental = spectralMagnitude(high.samples, 1800, 1440, 19200);
+    const auto ratio = alias / fundamental;
+    std::cout << "Alias 600 Hz relative to 1800 Hz=" << 20 * std::log10(std::max(ratio, 1e-15)) << " dB\n";
+    check(ratio < .002, "Saturation alias rejection regressed");
+}
+
+void parameterEffects() {
+    const auto source = kravatek::factoryPreset(kravatek::KickStyle::mutant);
+    const auto reference = kravatek::renderKick(source).samples;
+    const std::vector<std::pair<double kravatek::KickParameters::*, double>> changes {
+        {&kravatek::KickParameters::startHz, 750}, {&kravatek::KickParameters::endHz, 51},
+        {&kravatek::KickParameters::pitchDropSeconds, .03}, {&kravatek::KickParameters::pitchCurve, 1.3},
+        {&kravatek::KickParameters::durationSeconds, .7}, {&kravatek::KickParameters::attackSeconds, .004},
+        {&kravatek::KickParameters::ampCurve, .7}, {&kravatek::KickParameters::releaseSeconds, .030},
+        {&kravatek::KickParameters::driveDb, 8}, {&kravatek::KickParameters::fmAmount, .3},
+        {&kravatek::KickParameters::fmSeconds, .01}, {&kravatek::KickParameters::harmonics, .05},
+        {&kravatek::KickParameters::tailLevel, .1}, {&kravatek::KickParameters::tailSeconds, .05},
+        {&kravatek::KickParameters::tailRatio, .7}, {&kravatek::KickParameters::tailMotion, .1},
+        {&kravatek::KickParameters::filterHz, 700}, {&kravatek::KickParameters::resonance, .1},
+        {&kravatek::KickParameters::filterSweep, 3}, {&kravatek::KickParameters::shape, .05},
+        {&kravatek::KickParameters::clickLevel, .9}, {&kravatek::KickParameters::clickSeconds, .02},
+        {&kravatek::KickParameters::subMix, .8}, {&kravatek::KickParameters::subSeconds, .05}
+    };
+    for (const auto& [member, value] : changes) {
+        auto p = source; p.*member = value;
+        const auto kick = kravatek::renderKick(p); safe(kick);
+        check(kick.samples != reference, "A synthesis control has no effect");
+    }
+    // In a sub-only render the body/tail/filter cannot contaminate the sub layer.
+    auto isolated = source; isolated.subMix = 1;
+    const auto sub = kravatek::renderKick(isolated).samples;
+    isolated.tailLevel = 0; isolated.filterHz = 100; isolated.fmAmount = 0; isolated.driveDb = 0;
+    check(sub == kravatek::renderKick(isolated).samples, "Sub layer is affected by body or filter");
+}
+
+void filterStability() {
+    for (auto rate : {8000., 44100., 48000., 192000.})
+        for (auto cutoff : {80., 500., 16000.})
+            for (auto sweep : {-4., 4.}) {
+                auto p = kravatek::factoryPreset(kravatek::KickStyle::mutant);
+                p.resonance = .95; p.filterHz = cutoff; p.filterSweep = sweep;
+                p.driveDb = 30; p.fmAmount = 4; p.shape = 1; p.tailMotion = 1; p.subMix = 0;
+                p.durationSeconds = .150;
+                safe(kravatek::renderKick(p, rate));
+            }
+    auto p = kravatek::factoryPreset(kravatek::KickStyle::mutant);
+    p.resonance = 1; rejects([&] {kravatek::renderKick(p);});
+    p.resonance = .5; p.filterHz = std::numeric_limits<double>::quiet_NaN();
+    rejects([&] {kravatek::renderKick(p);});
+}
+
+void exploration() {
+    auto p = kravatek::factoryPreset(kravatek::KickStyle::mutant);
+    const kravatek::DnaLocks all {true,true,true,true,true,true,true};
+    const auto base = kravatek::renderKick(p).samples;
+    check(base == kravatek::renderKick(kravatek::evolve(p,77,1,1,all)).samples, "EVOLVE changes locked sound");
+    check(base == kravatek::renderKick(kravatek::evolve(p,77,0,0)).samples, "Zero EVOLVE changes sound");
+    const kravatek::DnaLocks subAttack {false,false,false,true,false,false,true};
+    const auto evolved = kravatek::evolve(p,77,1,1,subAttack);
+    check(evolved.endHz == p.endHz && evolved.subMix == p.subMix && evolved.subSeconds == p.subSeconds
+        && evolved.durationSeconds == p.durationSeconds, "Locked sub fields changed");
+    check(evolved.clickLevel == p.clickLevel && evolved.clickSeconds == p.clickSeconds
+        && evolved.transientSeed == p.transientSeed, "Locked transient fields changed");
+    check(evolved.tailMotion != p.tailMotion || evolved.tailRatio != p.tailRatio, "Unlocked tail did not evolve");
+    const auto conventional = kravatek::generate(kravatek::KickStyle::mutant,77,0);
+    const auto unusual = kravatek::generate(kravatek::KickStyle::mutant,77,1);
+    check(conventional.tailMotion == 0 && conventional.shape <= .15, "Low novelty permits extreme regions");
+    check(unusual.tailMotion > conventional.tailMotion, "Novelty did not open modulation regions");
+    check(kravatek::renderKick(unusual).samples == kravatek::renderKick(kravatek::generate(
+        kravatek::KickStyle::mutant,77,1)).samples, "GENERATE is not repeatable");
+    rejects([&] {kravatek::generate(kravatek::KickStyle::deep,0,std::numeric_limits<double>::quiet_NaN());});
+    for (std::uint32_t seed=0; seed<24; ++seed)
+        safe(kravatek::renderKick(kravatek::generate(static_cast<kravatek::KickStyle>(seed % 8), seed, seed / 23.0)));
+}
+
+void analysis() {
+    std::vector<float> tone(8192);
+    for (std::size_t i=0;i<tone.size();++i) tone[i]=static_cast<float>(.5*std::sin(2*std::numbers::pi*16*static_cast<double>(i)/8192));
+    const auto a=kravatek::analyse(tone,48000);
+    check(std::abs(a.peakDb+6.0206)<.001 && std::abs(a.rmsDb+9.0309)<.001, "Analysis peak/RMS calibration failed");
+    check(std::abs(a.dc)<1e-6 && std::abs(a.durationSeconds-8192.0/48000)<1e-9, "DC/duration measurement failed");
+    const auto maximum=*std::max_element(a.spectrumDb.begin(),a.spectrumDb.end());
+    check(std::abs(maximum+6.0206)<.02, "Spectrum dBFS calibration failed");
+    const auto match=kravatek::comparisonRms(tone,48000);
+    check(std::abs(match-std::sqrt(.125*8192/19200))<1e-6, "A/B window is not silence padded");
+    const std::array<float,1> one {0}; const auto tiny=kravatek::analyse(one,48000);
+    check(std::all_of(tiny.spectrumDb.begin(),tiny.spectrumDb.end(),[](auto x){return std::isfinite(x);}), "Tiny analysis input is invalid");
+    tone[3]=std::numeric_limits<float>::quiet_NaN(); rejects([&]{kravatek::analyse(tone,48000);});
+}
+
+void looping() {
+    kravatek::Playback player;
+    const auto k = kravatek::renderKick({});
+    check(player.queue(k.samples, 24000), "Unable to start tempo preview");
+    std::array<float, 125> audio {};
+    float* channels[] {audio.data()};
+    for (std::size_t offset = 0; offset < 72000; offset += audio.size()) {
+        player.process(channels, 1, static_cast<int>(audio.size()));
+        for (std::size_t i = 0; i < audio.size(); ++i) {
+            const auto phase = (offset + i) % 24000;
+            const auto expected = phase < k.samples.size() ? k.samples[phase] : 0.0f;
+            check(audio[i] == expected, "Loop has incorrect tempo or sample ordering");
+        }
+    }
+    player.stop();
+    for (int i = 0; i < 8; ++i) player.process(channels, 1, static_cast<int>(audio.size()));
+    check(std::all_of(audio.begin(), audio.end(), [](auto x) {return x == 0;}), "STOP left audio running");
+    check(player.queue(k.samples, 4800), "Unable to restart tempo preview");
+    float previous = 0;
+    for (int block = 0; block < 160; ++block) {
+        player.process(channels, 1, static_cast<int>(audio.size()));
+        for (auto sample : audio) {
+            check(std::isfinite(sample) && std::abs(sample - previous) < .04f, "Tempo retrigger click");
+            previous = sample;
+        }
+    }
+}
 }
 
 int main(int argc, char** argv) {
@@ -260,7 +448,9 @@ int main(int argc, char** argv) {
         {"oscillator", oscillator}, {"pitch", pitch}, {"reference", reference},
         {"reproducibility", reproducibility}, {"variations", variations},
         {"sample-rates", sampleRates}, {"invalid-input", invalidInput}, {"envelope", envelope},
-        {"wav", wav}, {"playback", playback}, {"retrigger", retrigger}, {"concurrency", concurrency}
+        {"wav", wav}, {"playback", playback}, {"retrigger", retrigger}, {"concurrency", concurrency},
+        {"analysis", analysis}, {"parameter-effects", parameterEffects}, {"filter-stability", filterStability}, {"exploration", exploration},
+        {"sound-families", soundFamilies}, {"dna-locks", dnaLocks}, {"saturation", saturation}, {"looping", looping}
     };
     try {
         if (argc != 2 || !tests.contains(argv[1])) throw std::runtime_error("Choose a named test");

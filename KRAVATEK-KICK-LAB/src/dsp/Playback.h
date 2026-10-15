@@ -14,7 +14,8 @@ class Playback {
 public:
     static constexpr std::size_t maxSamples = 384000;
     Playback();
-    bool queue(std::span<const float> samples) noexcept;
+    bool queue(std::span<const float> samples, std::size_t loopPeriodFrames = 0) noexcept;
+    void stop() noexcept;
     void process(float* const* outputs, int channels, int frames) noexcept;
     // Invoke only while the device callback is stopped. queue() may run concurrently.
     void reset() noexcept;
@@ -23,6 +24,7 @@ private:
     struct Slot {
         std::unique_ptr<float[]> samples = std::make_unique<float[]>(maxSamples);
         std::size_t size = 0;
+        std::size_t loopPeriod = 0;
         std::atomic<bool> free {true};
     };
     std::array<Slot, 3> slots_;

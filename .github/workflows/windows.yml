@@ -1,4 +1,4 @@
-name: Windows prototype
+name: Windows instrument 0.2
 
 on:
   push:
@@ -42,14 +42,17 @@ jobs:
           if ($process.ExitCode -ne 0) { throw "GUI smoke test failed: $($process.ExitCode)" }
           $report = Get-Content build/windows-x64/gui-smoke/gui-smoke.json | ConvertFrom-Json
           if ($report.result -ne 'passed') { throw 'GUI report missing or failed' }
-      - name: Package executable and listening example
+      - name: Package executable and eight listening examples
         run: |
           New-Item -ItemType Directory -Force build/package | Out-Null
           Copy-Item build/windows-x64/Release/KravatekKickLab.exe build/package/
           Copy-Item build/windows-x64/Release/kravatek-render.exe build/package/
-          Copy-Item README.md build/package/LIRE-MOI.md
-          & build/windows-x64/Release/kravatek-render.exe --seed 1 --output build/package/Kravatek-reference-001.wav
-          if ($LASTEXITCODE -ne 0) { throw 'WAV generation failed' }
+          Copy-Item docs/WINDOWS-GUIDE.md build/package/LIRE-MOI.md
+          New-Item -ItemType Directory -Force build/package/Examples | Out-Null
+          foreach ($style in @('reference', 'hard-techno', 'hard-psy', 'schranz', 'hardcore', 'deep', 'experimental', 'mutant')) {
+            & build/windows-x64/Release/kravatek-render.exe --style $style --seed 1 --output "build/package/Examples/$style.wav"
+            if ($LASTEXITCODE -ne 0) { throw "WAV generation failed: $style" }
+          }
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: KRAVATEK-KICK-LAB-Windows-x64

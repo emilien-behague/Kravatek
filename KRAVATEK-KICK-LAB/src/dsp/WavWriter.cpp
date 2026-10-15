@@ -22,14 +22,24 @@ std::string describe(const RenderedKick& k) {
     std::ostringstream out;
     out.imbue(std::locale::classic());
     out << std::setprecision(17)
-        << "{\"engine\":\"KRAVATEK-001\",\"seed\":" << p.seed
+        << "{\"engine\":\"KRAVATEK-002\",\"seed\":" << p.seed
         << ",\"sampleRate\":" << k.sampleRate
         << ",\"startHz\":" << p.startHz << ",\"endHz\":" << p.endHz
         << ",\"pitchDropSeconds\":" << p.pitchDropSeconds
         << ",\"durationSeconds\":" << p.durationSeconds
         << ",\"attackSeconds\":" << p.attackSeconds
         << ",\"releaseSeconds\":" << p.releaseSeconds
-        << ",\"peakDb\":" << p.peakDb << "}";
+        << ",\"peakDb\":" << p.peakDb
+        << ",\"pitchCurve\":" << p.pitchCurve << ",\"ampCurve\":" << p.ampCurve
+        << ",\"harmonics\":" << p.harmonics << ",\"fmAmount\":" << p.fmAmount
+        << ",\"driveDb\":" << p.driveDb << ",\"subMix\":" << p.subMix
+        << ",\"clickLevel\":" << p.clickLevel << ",\"clickSeconds\":" << p.clickSeconds
+        << ",\"transientSeed\":" << p.transientSeed
+        << ",\"fmSeconds\":" << p.fmSeconds << ",\"shape\":" << p.shape
+        << ",\"tailLevel\":" << p.tailLevel << ",\"tailSeconds\":" << p.tailSeconds
+        << ",\"tailRatio\":" << p.tailRatio << ",\"tailMotion\":" << p.tailMotion
+        << ",\"filterHz\":" << p.filterHz << ",\"resonance\":" << p.resonance
+        << ",\"filterSweep\":" << p.filterSweep << ",\"subSeconds\":" << p.subSeconds << "}";
     return out.str();
 }
 
