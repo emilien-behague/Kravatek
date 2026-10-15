@@ -56,7 +56,15 @@ Le catalogue source est `profiles/core-004.json`. Le paquet utilise sa copie ext
 
 ## Windows
 
-Compilation MSVC x64 et livraison 0.4 en attente de vérification après publication. Le workflow produit **KRAVA-KICK-LAB-Windows-x64** ; le chemin de compilation est `build/windows-x64/Release/KravaKickLab.exe`. Le paquet contient l'exécutable à sa racine, les deux CLI, le guide, le catalogue et `Examples/Universal/`. Le résultat effectif sera consigné ici après le run, sans réutiliser le succès de la 0.3 comme preuve.
+La compilation **[Windows universal lab 0.4 nº 9](https://github.com/emilien-behague/Kravatek/actions/runs/38745968415)** a **réussi** en **6 min 16 s**, sur le commit `2dc0b7d1e5e100935140fff9102a3038f8c589e0`. Elle inclut la correction du catalogue intégré pour MSVC et le dosage de rectification de la TAIL. Configuration MSVC x64, build Release, **46 tests CTest**, dix contrôles PCM24 GSE et seize UKE indépendants, test GUI et empaquetage ont terminé avec succès.
+
+Dans Artifacts, **KRAVA-KICK-LAB-Windows-x64** fait **10,3 Mo** ; digest publié par GitHub : `sha256:0852819b38aa71def370bcd9f6f3a1a1e3c0181ac21c4acd6eb7d4e549250ad4`. Le paquet contient **KravaKickLab.exe** à sa racine, les deux CLI, **LIRE-MOI.md**, **Profiles/core-004.json**, **Examples/Universal/** (48 WAV/JSON, session de 24 sons, mesures/distances CSV), ainsi que les anciens exemples. Chemin dans le job Windows : `build/windows-x64/Release/KravaKickLab.exe`.
+
+**Windows-test-results** fait **772 Ko** ; digest GitHub `sha256:783db21c1486fb776c53b3766191a86663066b456cfb1704f2083d6ff2ae2b40`. Il conserve le journal MSVC, les résultats CTest, rapports de génération/PCM24 et le rapport/capture GUI.
+
+Statut, commit, durée, présence et métadonnées des artefacts vérifiés sur le site public GitHub. **Les archives Windows n'ont pas été téléchargées dans le cloud et leurs digests n'ont pas été recalculés localement** : le téléchargement demande une connexion GitHub. Le tag `v0.4.0` ajoute ce bilan documentaire sans changement du code testé.
+
+La première tentative nº 7 avait échoué au build. Le catalogue intégré a été réemballé en tableau d'octets pour éviter la limite MSVC des grands littéraux ; la nº 8 a ensuite réussi. La **nº 9** est la livraison finale, incluant aussi le correctif de rectification. Pour essayer : ouvrir le run nº 9, télécharger KRAVA-KICK-LAB-Windows-x64, décompresser et lancer KravaKickLab.exe.
 
 ## À évaluer humainement
 
