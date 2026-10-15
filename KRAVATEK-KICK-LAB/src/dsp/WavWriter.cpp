@@ -45,15 +45,21 @@ std::string describe(const RenderedKick& k) {
 
 void writeWav24(const std::filesystem::path& path, const RenderedKick& k) {
     validate(k.parameters, k.sampleRate);
-    if (k.samples.empty() || k.samples.size() > 384000
-        || std::round(k.sampleRate) != k.sampleRate)
+    writePcm24(path, k.samples, k.sampleRate, describe(k));
+}
+
+void writePcm24(const std::filesystem::path& path, std::span<const float> samples, double sampleRate, const std::string& metadata) {
+    if (!std::isfinite(sampleRate) || sampleRate < 8000 || sampleRate > 192000 || metadata.size() > 16*1024*1024)
+        throw std::invalid_argument("Invalid WAV rate or metadata");
+    if (samples.empty() || samples.size() > 384000
+        || std::round(sampleRate) != sampleRate)
         throw std::invalid_argument("Invalid WAV buffer or non-integer sample rate");
-    for (const auto sample : k.samples)
+    for (const auto sample : samples)
         if (!std::isfinite(sample) || std::abs(sample) > 1.0f)
             throw std::invalid_argument("WAV contains invalid audio");
 
-    const auto dataSize = static_cast<std::uint32_t>(k.samples.size() * 3);
-    const auto comment = describe(k) + '\0';
+    const auto dataSize = static_cast<std::uint32_t>(samples.size() * 3);
+    const auto comment = metadata + '\0';
     const auto commentSize = static_cast<std::uint32_t>(comment.size());
     const auto listSize = 4U + 8U + commentSize + (commentSize & 1U);
     const auto riffSize = 36U + dataSize + (dataSize & 1U) + 8U + listSize;
@@ -61,11 +67,11 @@ void writeWav24(const std::filesystem::path& path, const RenderedKick& k) {
     out.exceptions(std::ios::failbit | std::ios::badbit);
     out.write("RIFF", 4); littleEndian(out, riffSize, 4); out.write("WAVEfmt ", 8);
     littleEndian(out, 16, 4); littleEndian(out, 1, 2); littleEndian(out, 1, 2);
-    const auto rate = static_cast<std::uint32_t>(k.sampleRate);
+    const auto rate = static_cast<std::uint32_t>(sampleRate);
     littleEndian(out, rate, 4); littleEndian(out, rate * 3, 4);
     littleEndian(out, 3, 2); littleEndian(out, 24, 2);
     out.write("data", 4); littleEndian(out, dataSize, 4);
-    for (const auto sample : k.samples) {
+    for (const auto sample : samples) {
         const auto pcm = static_cast<std::int32_t>(std::llround(static_cast<double>(sample) * 8388607.0));
         littleEndian(out, static_cast<std::uint32_t>(pcm), 3);
     }

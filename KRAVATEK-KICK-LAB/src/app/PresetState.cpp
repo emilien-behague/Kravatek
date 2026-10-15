@@ -1,6 +1,11 @@
 #include "PresetState.h"
 #include "dsp/WavWriter.h"
 #include <cmath>
+#include <charconv>
+#include <sstream>
+#include <iomanip>
+#include <locale>
+#include <limits>
 #include <stdexcept>
 
 namespace {
@@ -8,6 +13,15 @@ double number(const juce::var& object, const char* name) {
     const auto value = object[juce::Identifier(name)];
     if (!(value.isDouble() || value.isInt() || value.isInt64()) || !std::isfinite(static_cast<double>(value)))
         throw std::invalid_argument(std::string("Missing or invalid preset value: ") + name);
+    const auto exact = object["_exact"][juce::Identifier(name)];
+    if (exact.isString()) {
+        const auto str = exact.toString().toStdString(); double result = 0;
+        const auto parsed = std::from_chars(str.data(), str.data() + str.size(), result);
+        if (parsed.ec != std::errc() || parsed.ptr != str.data() + str.size() || !std::isfinite(result)
+            || std::abs(result - static_cast<double>(value)) > std::numeric_limits<double>::epsilon() * 16 * std::max(1.0, std::abs(result)))
+            throw std::invalid_argument("Invalid exact legacy parameter");
+        return result;
+    }
     return static_cast<double>(value);
 }
 std::uint32_t seed(const juce::var& object, const char* name) {
@@ -28,7 +42,40 @@ juce::String encodePreset(const PresetState& state) {
     juce::DynamicObject::Ptr root = new juce::DynamicObject;
     root->setProperty("schema", "KRAVATEK_PRESET_002");
     const auto description = kravatek::describe({state.parameters, 48000, {}});
-    root->setProperty("parameters", juce::JSON::parse(juce::String::fromUTF8(description.c_str())));
+    auto parameters = juce::JSON::parse(juce::String::fromUTF8(description.c_str()));
+    juce::DynamicObject::Ptr exact = new juce::DynamicObject;
+    const auto put = [&](const char* name, double value) {
+        std::ostringstream out; out.imbue(std::locale::classic()); out << std::setprecision(17) << value;
+        exact->setProperty(name, juce::String::fromUTF8(out.str().c_str()));
+    };
+    const auto& p = state.parameters;
+    put("startHz", p.startHz);
+    put("endHz", p.endHz);
+    put("pitchDropSeconds", p.pitchDropSeconds);
+    put("durationSeconds", p.durationSeconds);
+    put("attackSeconds", p.attackSeconds);
+    put("releaseSeconds", p.releaseSeconds);
+    put("peakDb", p.peakDb);
+    put("pitchCurve", p.pitchCurve);
+    put("ampCurve", p.ampCurve);
+    put("harmonics", p.harmonics);
+    put("fmAmount", p.fmAmount);
+    put("driveDb", p.driveDb);
+    put("subMix", p.subMix);
+    put("clickLevel", p.clickLevel);
+    put("clickSeconds", p.clickSeconds);
+    put("fmSeconds", p.fmSeconds);
+    put("shape", p.shape);
+    put("tailLevel", p.tailLevel);
+    put("tailSeconds", p.tailSeconds);
+    put("tailRatio", p.tailRatio);
+    put("tailMotion", p.tailMotion);
+    put("filterHz", p.filterHz);
+    put("resonance", p.resonance);
+    put("filterSweep", p.filterSweep);
+    put("subSeconds", p.subSeconds);
+    parameters.getDynamicObject()->setProperty("_exact", juce::var(exact.get()));
+    root->setProperty("parameters", parameters);
     root->setProperty("style", state.style);
     root->setProperty("mutation", state.mutation); root->setProperty("novelty", state.novelty);
     root->setProperty("bpm", state.bpm);
@@ -37,7 +84,7 @@ juce::String encodePreset(const PresetState& state) {
     locks->setProperty("tone", state.locks.tone); locks->setProperty("transient", state.locks.transient);
     locks->setProperty("tail", state.locks.tail); locks->setProperty("filter", state.locks.filter); locks->setProperty("sub", state.locks.sub);
     root->setProperty("locks", juce::var(locks.get()));
-    return juce::JSON::toString(juce::var(root.get()), false, 17);
+    return juce::JSON::toString(juce::var(root.get()), false, 25);
 }
 
 PresetState decodePreset(const juce::String& json) {
