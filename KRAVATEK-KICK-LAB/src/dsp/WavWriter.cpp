@@ -51,7 +51,7 @@ void writeWav24(const std::filesystem::path& path, const RenderedKick& k) {
 void writePcm24(const std::filesystem::path& path, std::span<const float> samples, double sampleRate, const std::string& metadata) {
     if (!std::isfinite(sampleRate) || sampleRate < 8000 || sampleRate > 192000 || metadata.size() > 16*1024*1024)
         throw std::invalid_argument("Invalid WAV rate or metadata");
-    if (samples.empty() || samples.size() > 384000
+    if (samples.empty() || samples.size() > 768000
         || std::round(sampleRate) != sampleRate)
         throw std::invalid_argument("Invalid WAV buffer or non-integer sample rate");
     for (const auto sample : samples)

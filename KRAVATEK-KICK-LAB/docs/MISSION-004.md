@@ -27,3 +27,34 @@ Les requêtes séparent profil, architecture forcée éventuelle, caractère, no
 La campagne a réellement exporté 48 WAV/JSON (8 profils × 3 graines × 2 fréquences). Les 24 audios à 48 kHz sont distincts ; les mesures et les distances entre profils sont dans `build-linux/test-output/universal-reference/`. Vérifications ciblées réussies : catalogue/rejets, campagne, verrous, recettes persistantes, caractères/architectures forcées, références acoustiques et ancienne population de 100 candidats.
 
 Une faiblesse des mesures 003 a été corrigée pour UKE : l'analyse Hann initiale sous-pondérait les transitoires au début du fichier. L'analyse UKE utilise des fenêtres racine de Hann périodiques centrées, recouvrement 50 % et padding aux deux extrémités, pour une somme des fenêtres au carré constante. Un signal de référence grave + burst aigu vérifie la fraction d'énergie haute. L'ancien calcul reste utilisé pour les décisions de diversité GSE, afin de ne pas changer ses éventuelles relances à graines identiques. Les métriques ne constituent pas une validation musicale.
+
+
+## Intégration du premier ensemble
+
+Le navigateur GENRE / SUBGENRE / CHARACTER / NEXT ARCHITECTURE / NEXT NOTE règle les prochaines générations ; les paramètres du son sélectionné restent éditables séparément. Les huit profils sont réellement disponibles. GENETIC 0.3 conserve les anciens modes ; CLASSIC 0.2 reste accessible. Le panneau SYNTH/FX ajoute trois pages de contrôles personnalisés pour les chaînes BODY/TAIL et les glides, phases et membrane. Les paramètres sans effet dans le contexte sont désactivés. L'éditeur de session indique désormais moteur et identité dans le cartouche.
+
+Le lecteur et l'export acceptent les buffers de quatre secondes jusqu'à 192 kHz ; l'interface exporte à 44,1/48 kHz. Les durées affichées ne sont plus bornées à 1,5 seconde. Le moniteur signale TAIL > BEAT. LOOP reste monophonique et tronque la tail au prochain temps avec extinction : ONE-SHOT est nécessaire pour écouter une longue 808 entièrement. Les recommandations BPM des profils ne constituent pas des restrictions de genre ; la plage générale de lecture est 40–400 BPM.
+
+L'estimation F0 UKE utilise un préfiltrage à 600 Hz et une décimation vers 4 kHz pour couvrir les notes proposées, au lieu de limiter toute estimation aux basses fréquences 003. Les références aux notes MIDI 24, 33 et 60 sont testées aux deux fréquences cibles ; il ne s'agit pas d'un récepteur MIDI. L'ancien estimateur GSE reste inchangé. La périodicité des textures complexes reste ambiguë.
+
+Le smoke test a exécuté les anciens parcours, puis 32 candidats via les huit profils du navigateur, l'accordage 808 à 55 Hz, le contrôle d'une durée dépassant 1,5 seconde, les contrôles de distorsion/phase du nouveau panneau, 8 mutations UKE avec SUB/ATTACK exacts, A/B ajusté, SAVE/OPEN avec recette exacte et HISTORY sur 72 états. Le retour d'historique conserve le son sélectionné dans la zone visible. Le test utilise une sortie silencieuse ; aucune écoute physique n'est revendiquée.
+
+La campagne de référence produit aussi `reference.session.json` : 24 sons issus des huit profils, ouvrables ensemble pour A/B. Les 48 WAV/JSON et deux CSV sont regroupés dans le paquet Windows sous `Examples/Universal/`.
+
+## Fichiers modifiés
+
+- `src/genetic/UniversalDsp`, `Genome`, `LayerRenderer` : architectures, gènes, versions par couche, distorsions et accordage.
+- `src/genetic/Profile`, `ProfileIO`, `BundledProfiles.h.in`, `profiles/core-004.json` : schéma, distributions, catalogue externe et snapshot intégré.
+- `src/genetic/Generator`, `Population`, `SessionIO`, `Features` : évolution, recettes, compatibilité, persistance et mesures.
+- `src/app/GeneticLab`, `UniversalControls`, `Main`, `MainComponent`, `InstrumentStyle`, `Windows.rc` : navigateur, panneau, monitoring, ergonomie et version 0.4.
+- `src/dsp/Playback.h`, `WavWriter.cpp`, `src/cli/GeneticMain.cpp` : buffers longs, export et outil universel.
+- `tests/UniversalTests`, `ProfileTests`, `StateTests`, `GeneticTests`, `CMakeLists.txt` : vérifications, campagne et compilation.
+- `tools/run_cloud_smoke.py`, `validate_genetic_exports.py`, `.github/workflows/windows.yml`, README et documentation : exécution reproductible et livraison.
+
+## Limites et lots suivants
+
+Le lot A et le premier ensemble du lot B sont livrés avec leur intégration de navigateur. L'ensemble de la mission n'est pas terminé. Les profils spécialisés Schranz, Rawstyle, Gabber, Frenchcore et Uptempo doivent encore recevoir leurs algorithmes/régions propres (lot C). Le mode Schranz 003 reste opérationnel. Les autres sous-genres, DnB/Dubstep, familles globales et profils acoustiques spécifiques restent à étendre avec validation (lot D).
+
+Le mélange pondéré de deux profils n'est pas développé (lot E). Changer le genre cible avant EVOLVE permet une transformation progressive, mais ne constitue pas un hybride 70/30 de deux genres. Le profil Hybrid Experimental combine des modules, pas deux profils musicaux pondérés. Le MIDI entrant reste à développer ; NEXT NOTE est un outil d'accordage numérique. Pas d'API IA, prompteur, VST3 ni import de samples.
+
+La bibliothèque reste limitée à 512 états. Certaines premières préécoutes, solos et éditions restent synchrones. Les courbes restent paramétriques à trois poignées. Les textures numériques peuvent volontairement générer des artefacts spectraux ; le test d'alias ciblé ne qualifie pas tous les réglages. La qualité musicale, le confort sur le PC du créateur, les dialogues natifs Windows et l'import FL Studio restent à évaluer humainement.

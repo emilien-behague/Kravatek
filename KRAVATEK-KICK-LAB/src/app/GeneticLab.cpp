@@ -24,6 +24,86 @@ void comboStyle(juce::ComboBox &box) {
 }
 } // namespace
 GeneticLab::GeneticLab() {
+  profiles_ = bundledProfiles();
+  const auto external =
+      juce::File::getSpecialLocation(juce::File::currentExecutableFile)
+          .getSiblingFile("Profiles")
+          .getChildFile("core-004.json");
+  if (external.existsAsFile()) {
+    try {
+      if (external.getSize() > 1024 * 1024)
+        throw std::invalid_argument("Catalogue trop grand");
+      profiles_ = decodeCatalog(external.loadFileAsString().toStdString());
+    } catch (const std::exception &e) {
+      catalogWarning_ =
+          "Catalogue externe refusé ; catalogue intégré actif : " +
+          juce::String(e.what());
+    }
+  }
+  for (auto *c : std::initializer_list<juce::Component *>{
+           &genre_, &subgenre_, &character_, &architecture_, &note_, &details_,
+           &genreLabel_, &subgenreLabel_, &characterLabel_, &architectureLabel_,
+           &noteLabel_, &overlap_})
+    addAndMakeVisible(c);
+  for (auto *l : {&genreLabel_, &subgenreLabel_, &characterLabel_,
+                  &architectureLabel_, &noteLabel_, &overlap_}) {
+    l->setFont(krui::mono(10));
+    l->setColour(juce::Label::textColourId, krui::ink);
+  }
+  genreLabel_.setText("GENRE", juce::dontSendNotification);
+  subgenreLabel_.setText("SUBGENRE / PROFILE", juce::dontSendNotification);
+  characterLabel_.setText("CHARACTER", juce::dontSendNotification);
+  architectureLabel_.setText("NEXT ARCHITECTURE", juce::dontSendNotification);
+  noteLabel_.setText("NEXT NOTE", juce::dontSendNotification);
+  for (auto *box : {&genre_, &subgenre_, &character_, &architecture_, &note_})
+    comboStyle(*box);
+  for (int i = 0; i < static_cast<int>(Character::count); ++i)
+    character_.addItem(characterName(static_cast<Character>(i)), i + 1);
+  architecture_.addItem("PROFILE / AUTO", 1);
+  for (int i = 0; i < 6; ++i)
+    architecture_.addItem(architectureName(static_cast<Architecture>(i)),
+                          i + 2);
+  note_.addItem("PROFILE", 1);
+  static const char *notes[] = {"C",  "C#", "D",  "D#", "E",  "F",
+                                "F#", "G",  "G#", "A",  "A#", "B"};
+  for (int n = 24; n <= 60; ++n)
+    note_.addItem(juce::String(notes[n % 12]) + juce::String(n / 12 - 1) +
+                      " / " + juce::String(n),
+                  n + 2);
+  genre_.onChange = [this] { chooseGenre(); };
+  subgenre_.onChange = [this] {
+    if (subgenre_.getSelectedId() > 0 && session_.settings.universal) {
+      session_.settings.universal->profile = browserProfiles_.at(
+          static_cast<std::size_t>(subgenre_.getSelectedId() - 1));
+      dirty_ = true;
+      syncBrowser();
+    }
+  };
+  character_.onChange = [this] {
+    if (session_.settings.universal) {
+      session_.settings.universal->character =
+          static_cast<Character>(character_.getSelectedId() - 1);
+      dirty_ = true;
+    }
+  };
+  architecture_.onChange = [this] {
+    if (session_.settings.universal) {
+      session_.settings.universal->overrideArchitecture =
+          architecture_.getSelectedId() == 1
+              ? Architecture::count
+              : static_cast<Architecture>(architecture_.getSelectedId() - 2);
+      dirty_ = true;
+    }
+  };
+  note_.onChange = [this] {
+    if (session_.settings.universal) {
+      session_.settings.universal->note =
+          note_.getSelectedId() == 1 ? 0 : note_.getSelectedId() - 2;
+      dirty_ = true;
+    }
+  };
+  details_.onClick = [this] { openDetails(); };
+
   for (auto *c : std::initializer_list<juce::Component *>{
            &brand_,        &graph_,      &cardViewport_, &mode_,
            &count_,        &bodyKind_,   &attackKind_,   &tailKind_,
@@ -63,7 +143,7 @@ GeneticLab::GeneticLab() {
     mode_.addItem(modeName(static_cast<Mode>(i)), i + 1);
   for (auto n : {4, 8, 12, 20})
     count_.addItem(juce::String(n), n);
-  for (int i = 0; i < 4; ++i) {
+  for (int i = 0; i < 6; ++i) {
     bodyKind_.addItem(bodyName(static_cast<BodyKind>(i)), i + 1);
     tailKind_.addItem(tailName(static_cast<TailKind>(i)), i + 1);
   }
@@ -92,7 +172,7 @@ GeneticLab::GeneticLab() {
       "un score d'originalité."));
   bpm_.setSliderStyle(juce::Slider::LinearHorizontal);
   bpm_.setTextBoxStyle(juce::Slider::TextBoxRight, false, 68, 24);
-  bpm_.setRange(80, 220, 1);
+  bpm_.setRange(40, 400, 1);
   bpm_.setTextValueSuffix(" BPM");
   const std::array<const char *, 4> names{"LOCK SUB", "LOCK ATTACK",
                                           "LOCK BODY", "LOCK TAIL"};
@@ -179,7 +259,8 @@ GeneticLab::GeneticLab() {
   configure(resonance, "RESONANCE", 0, 95, .1, " %",
             "Résonance stable du BODY. La TAIL a son propre filtre.");
   controls_[cutoff].slider.setSkewFactorFromMidPoint(1600);
-  configure(subHz, "PITCH", 25, 100, .1, " Hz", "Fréquence fixe du SUB.");
+  configure(subHz, "PITCH", 25, 100, .1, " Hz",
+            "Départ du SUB ; cible et glide dans SYNTH / FX.");
   configure(subLevel, "LEVEL", 0, 100, .1, " %",
             "Niveau du SUB, indépendant des autres couches.");
   configure(subDecay, "DECAY", 15, 1000, 1, " ms",
@@ -219,12 +300,14 @@ GeneticLab::GeneticLab() {
   };
   bpm_.onValueChange = [this] {
     session_.bpm = bpm_.getValue();
+    updateOverlap();
     dirty_ = true;
     if (playing_)
       audition();
   };
   loop_.onClick = [this] {
     session_.loop = loop_.getToggleState();
+    updateOverlap();
     dirty_ = true;
     if (playing_)
       audition();
@@ -246,6 +329,10 @@ GeneticLab::GeneticLab() {
     if (bodyKind_.getSelectedId() > 0)
       modify([this](Genome &g) {
         g.body.kind = static_cast<BodyKind>(bodyKind_.getSelectedId() - 1);
+        if (g.body.kind >= BodyKind::membrane) {
+          upgrade(g);
+          g.body.renderVersion = 4;
+        }
       });
   };
   attackKind_.onChange = [this] {
@@ -259,6 +346,10 @@ GeneticLab::GeneticLab() {
     if (tailKind_.getSelectedId() > 0)
       modify([this](Genome &g) {
         g.tail.kind = static_cast<TailKind>(tailKind_.getSelectedId() - 1);
+        if (g.tail.kind >= TailKind::gated) {
+          upgrade(g);
+          g.tail.renderVersion = 4;
+        }
       });
   };
   generate_.onClick = [this] { startBatch(false); };
@@ -317,15 +408,18 @@ GeneticLab::GeneticLab() {
   cardViewport_.setViewedComponent(&cards_, false);
   cardViewport_.setScrollBarsShown(true, false);
   cards_.onSelect = [this](int i, bool play) { select(i, play); };
-  session_.selected = static_cast<int>(
-      session_.library.append(generateGenome(Mode::experimental, 1, .75)));
+  session_.settings.universal = UniversalRequest{profiles_.front()};
+  session_.selected = static_cast<int>(session_.library.append(
+      generateUniversal(*session_.settings.universal, 1, .75)));
   session_.visible = {session_.selected};
   sync();
   refreshCurrent();
   rebuildCards();
   setBusy(false);
-  status("GENETIC LAB / choisis MODE, NOVELTY et COUNT, puis GENERATE. "
-         "Double-clic sur une carte = écoute.");
+  status(catalogWarning_.isEmpty() ? "STYLE BROWSER / choisis GENRE, PROFILE, "
+                                     "NOVELTY et COUNT, puis GENERATE."
+                                   : catalogWarning_,
+         catalogWarning_.isNotEmpty());
   setWantsKeyboardFocus(true);
 }
 GeneticLab::~GeneticLab() {
@@ -349,13 +443,29 @@ Candidate &GeneticLab::cached(const Genome &g) {
   Candidate c;
   c.genome = g;
   c.audio = render(g, session_.settings.sampleRate, false);
-  c.features = measure(c.audio.mix, c.audio.sampleRate);
+  c.features =
+      measure(c.audio.mix, c.audio.sampleRate, g.engine == universalVersion);
   if (cache_.size() > 80)
     cache_.erase(cache_.begin());
   return cache_.insert_or_assign(g.id, std::move(c)).first->second;
 }
 void GeneticLab::sync() {
   const auto &g = current();
+  syncBrowser();
+  controls_[bodyLength].slider.setRange(
+      8, g.body.renderVersion == 4 ? 4000 : 1500, 1);
+  controls_[tailLength].slider.setRange(
+      8, g.tail.renderVersion == 4 ? 4000 : 1500, 1);
+  controls_[subLength].slider.setRange(
+      8, g.sub.renderVersion == 4 ? 4000 : 1500, 1);
+  controls_[subHz].slider.setRange(25, g.sub.renderVersion == 4 ? 400 : 100,
+                                   .1);
+  controls_[pitchEnd].slider.setRange(25, g.body.renderVersion == 4 ? 400 : 150,
+                                      .1);
+  controls_[subDecay].slider.setRange(
+      15, g.sub.renderVersion == 4 ? 3000 : 1000, 1);
+  controls_[tailDecay].slider.setRange(
+      15, g.tail.renderVersion == 4 ? 3000 : 1000, 1);
   const std::array<double, controlCount> values{
       g.body.startHz,      g.body.endHz,           g.body.settleTime * 1000,
       g.body.curve,        g.attack.level * 100,   g.attack.decay * 1000,
@@ -395,11 +505,11 @@ void GeneticLab::sync() {
                           juce::dontSendNotification);
   selectedName_.setText(juce::String(g.name) + (edit_ ? " *EDIT" : ""),
                         juce::dontSendNotification);
-  selectedInfo_.setText(juce::String(g.id.substr(0, 15)) + " / G" +
-                            juce::String(static_cast<int>(g.generation)) +
-                            " / " + bodyName(g.body.kind) + " + " +
-                            tailName(g.tail.kind),
-                        juce::dontSendNotification);
+  selectedInfo_.setText(
+      juce::String(g.engine) + " / " + juce::String(g.id.substr(0, 15)) +
+          " / G" + juce::String(static_cast<int>(g.generation)) + " / " +
+          bodyName(g.body.kind) + " + " + tailName(g.tail.kind),
+      juce::dontSendNotification);
   aBox_.clear(juce::dontSendNotification);
   bBox_.clear(juce::dontSendNotification);
   for (std::size_t i = 0; i < session_.library.entries().size(); ++i) {
@@ -416,13 +526,15 @@ void GeneticLab::sync() {
   controls_[harmonics].setEnabled(!busy_ && g.body.kind != BodyKind::sine);
   controls_[fm].setEnabled(
       !busy_ && (g.body.kind == BodyKind::fm || g.body.kind == BodyKind::ring));
-  controls_[tailMotion].setEnabled(!busy_ && g.tail.kind != TailKind::tonal);
+  controls_[tailMotion].setEnabled(!busy_ && g.tail.kind != TailKind::tonal &&
+                                   g.tail.kind != TailKind::gated);
   controls_[attackHz].setEnabled(!busy_ && g.attack.kind != AttackKind::noise);
   controls_[attackColour].setEnabled(!busy_ &&
                                      (g.attack.kind == AttackKind::noise ||
                                       g.attack.kind == AttackKind::hybrid));
   updateComparisonMetrics();
   cards_.selected = session_.selected;
+  updateOverlap();
   repaint();
 }
 void GeneticLab::rebuildCards() {
@@ -560,6 +672,8 @@ void GeneticLab::controlChanged(Control c) {
       g.body.resonance = v / 100;
       break;
     case subHz:
+      if (g.sub.renderVersion == 4 && std::abs(g.sub.hz - g.sub.endHz) < .0001)
+        g.sub.endHz = v;
       g.sub.hz = v;
       break;
     case subLevel:
@@ -607,6 +721,7 @@ void GeneticLab::refreshCurrent() {
         v *= .35f;
     }
     graph_.setSound(current(), wave, session_.settings.sampleRate);
+    updateOverlap();
     const auto estimate = f.fundamentalHz > 0
                               ? juce::String(f.fundamentalHz, 1) + " Hz / " +
                                     juce::String(static_cast<int>(std::lround(
@@ -667,9 +782,11 @@ void GeneticLab::readSettings() {
 void GeneticLab::setBusy(bool value) {
   busy_ = value;
   for (auto *c : std::initializer_list<juce::Component *>{
-           &generate_, &regenerate_, &evolve_, &history_, &save_, &open_,
-           &keep_, &export_, &mode_, &seed_, &count_, &novelty_, &refine_,
-           &rate_, &bodyKind_, &attackKind_, &tailKind_, &graph_})
+           &generate_,   &regenerate_,   &evolve_, &history_, &save_,
+           &open_,       &keep_,         &export_, &mode_,    &seed_,
+           &count_,      &novelty_,      &refine_, &rate_,    &bodyKind_,
+           &attackKind_, &tailKind_,     &graph_,  &genre_,   &subgenre_,
+           &character_,  &architecture_, &note_,   &details_})
     c->setEnabled(!value);
   for (auto &c : controls_)
     c.setEnabled(!value);
@@ -798,6 +915,15 @@ void GeneticLab::finishJob(std::vector<Candidate> candidates, Job job,
     stopTimer();
     sync();
     rebuildCards();
+    if (job == Job::refresh) {
+      const auto at = std::find(session_.visible.begin(),
+                                session_.visible.end(), session_.selected);
+      if (at != session_.visible.end()) {
+        const auto columns = std::max(1, cards_.getWidth() / 260);
+        cardViewport_.setViewPosition(
+            0, static_cast<int>(at - session_.visible.begin()) / columns * 92);
+      }
+    }
     refreshCurrent();
     batchInfo_.setText(
         juce::String(static_cast<int>(visible.size())) + " candidats / " +
@@ -982,7 +1108,8 @@ void GeneticLab::exportTo(const juce::File &file) {
   auto g = current();
   g.locks = session_.settings.locks;
   auto &c = cached(g);
-  const auto json = encodeSound(g, session_.settings.sampleRate);
+  const auto json =
+      encodeSound(g, session_.settings.sampleRate, session_.settings.universal);
   juce::TemporaryFile wav(file);
   kravatek::writePcm24(nativePath(wav.getFile()), c.audio.mix,
                        c.audio.sampleRate, json);
@@ -1069,6 +1196,7 @@ void GeneticLab::paint(juce::Graphics &g) {
       static_cast<float>(getWidth()), static_cast<float>(getHeight()), false));
   g.fillAll();
   krui::grid(g, getLocalBounds(), 24);
+  krui::frame(g, browserBounds_, "STYLE BROWSER / GENERATION SETTINGS");
   krui::frame(g, presetBounds_, "PRESET / GENETIC IDENTITY");
   krui::frame(g, monitorBounds_, "MONITOR / A-B MIX");
   krui::frame(g, labBounds_, "GENETIC LAB / GENERATION LIBRARY");
@@ -1132,16 +1260,35 @@ void GeneticLab::resized() {
   export_.setBounds(actions);
   header.removeFromRight(12);
   presetBounds_ = header;
-  auto preset = header.reduced(12).withTrimmedTop(24);
-  selectedName_.setBounds(preset.removeFromTop(23));
+  auto preset = header.reduced(12, 6).withTrimmedTop(26);
+  selectedName_.setBounds(preset.removeFromTop(22));
+  selectedInfo_.setBounds(preset.removeFromTop(14));
   auto row = preset.removeFromBottom(27);
   open_.setBounds(row.removeFromLeft(60));
   row.removeFromLeft(6);
   save_.setBounds(row.removeFromLeft(60));
   row.removeFromLeft(6);
   keep_.setBounds(row.removeFromLeft(90));
-  selectedInfo_.setBounds(preset);
+
   b.removeFromTop(12);
+  browserBounds_ = b.removeFromTop(82);
+  b.removeFromTop(12);
+  auto browser = browserBounds_.reduced(10).withTrimmedTop(21);
+  const auto place = [&](juce::Label &label, juce::Component &control,
+                         int width) {
+    auto r = browser.removeFromLeft(width);
+    label.setBounds(r.removeFromTop(15));
+    control.setBounds(r.removeFromTop(28));
+    browser.removeFromLeft(8);
+  };
+  place(genreLabel_, genre_, 166);
+  place(subgenreLabel_, subgenre_, 225);
+  mode_.setBounds(subgenre_.getBounds());
+  place(characterLabel_, character_, 140);
+  place(architectureLabel_, architecture_, 205);
+  place(noteLabel_, note_, 130);
+  details_.setBounds(
+      browser.removeFromRight(112).withTrimmedTop(15).withHeight(28));
   status_.setBounds(b.removeFromBottom(20));
   b.removeFromBottom(3);
   previewBounds_ = b.removeFromBottom(64);
@@ -1198,13 +1345,12 @@ void GeneticLab::resized() {
   compare_.setBounds(ab);
   compareMetrics_.setBounds(monitor.removeFromTop(29));
   metrics_.setBounds(monitor.removeFromTop(63));
+  overlap_.setBounds(monitor.removeFromTop(30));
   monitor.removeFromTop(3);
   spectrumBounds_ = monitor;
   auto lab = labBounds_.reduced(10).withTrimmedTop(24);
   auto config = lab.removeFromTop(31);
-  modeLabel_.setBounds(config.removeFromLeft(38));
-  mode_.setBounds(config.removeFromLeft(170));
-  config.removeFromLeft(12);
+  modeLabel_.setVisible(false);
   seedLabel_.setBounds(config.removeFromLeft(38));
   seed_.setBounds(config.removeFromLeft(120));
   config.removeFromLeft(12);
@@ -1249,6 +1395,7 @@ void GeneticLab::runSmokeTest(
   smokeDirectory_ = directory;
   smokeCompletion_ = std::move(completion);
   smokeStage_ = 1;
+  genre_.setSelectedId(1, juce::sendNotificationSync);
   mode_.setSelectedId(static_cast<int>(Mode::experimental) + 1,
                       juce::sendNotificationSync);
   novelty_.setValue(75, juce::sendNotificationSync);
@@ -1375,6 +1522,108 @@ void GeneticLab::smokeAdvance() {
                   side.settings.locks == session_.settings.locks,
               "GUI associated parameters differ from exported sound");
       session_.settings.locks = previousLocks;
+      smokeProfile_ = 0;
+      smokeStage_ = 4;
+      smokeUniversal();
+      return;
+    }
+    if (smokeStage_ == 4) {
+      require(session_.visible.size() == 4 &&
+                  current().engine == universalVersion,
+              "Universal browser failed to generate a lot");
+      require(current().profileId ==
+                  profiles_.at(static_cast<std::size_t>(smokeProfile_)).id,
+              "Browser profile ignored");
+      if (smokeProfile_ == 6) {
+        require(std::abs(current().sub.endHz - 55) < 1e-8,
+                "Browser note tuning inactive");
+        require(std::abs(controls_[subLength].slider.getValue() -
+                         current().sub.duration * 1000) < .51,
+                "808 duration display clamped");
+        require(overlap_.getText().contains("TAIL > BEAT"),
+                "Long tail warning missing");
+      }
+      if (++smokeProfile_ < static_cast<int>(profiles_.size())) {
+        smokeUniversal();
+        return;
+      }
+      const auto before = cached(current()).audio.mix;
+      auto &popup = openDetails();
+      require(popup.isVisible(), "Advanced popup did not open");
+      popup.dismiss();
+      UniversalControls panel(current(),
+                              [this](auto fn) { modify(std::move(fn)); });
+      panel.setValue(2, 18);
+      refreshCurrent();
+      require(cached(current()).audio.mix != before,
+              "Advanced distortion control inactive");
+      const auto oldSub = render(current()).layers[0];
+      panel.setPage(2);
+      panel.setValue(2, 123);
+      refreshCurrent();
+      require(render(current()).layers[0] != oldSub,
+              "Advanced sub phase inactive");
+      commitEdit();
+      smokeParent_ = current();
+      smokeParentIndex_ = session_.selected;
+      session_.settings.locks = {true, true, false, false};
+      count_.setSelectedId(8, juce::sendNotificationSync);
+      seed_.setText("445566", false);
+      smokeStage_ = 5;
+      evolve_.onClick();
+      return;
+    }
+    if (smokeStage_ == 5) {
+      require(session_.visible.size() == 8, "Universal EVOLVE count wrong");
+      require(session_.library.at(
+                  static_cast<std::size_t>(smokeParentIndex_)) == smokeParent_,
+              "Universal GUI overwrote parent");
+      const auto before = render(smokeParent_);
+      for (auto idx : session_.visible) {
+        const auto child =
+            render(session_.library.at(static_cast<std::size_t>(idx)));
+        require(child.layers[0] == before.layers[0] &&
+                    child.layers[1] == before.layers[1],
+                "Universal GUI EVOLVE changed locked layers");
+      }
+      session_.compareA = smokeParentIndex_;
+      session_.compareB = session_.selected;
+      session_.matchLevel = true;
+      sync();
+      activeA_ = true;
+      audition(session_.compareA, true);
+      const auto a = lastAudition_;
+      activeA_ = false;
+      audition(session_.compareB, true);
+      const auto rate = deviceRate ? deviceRate() : 48000;
+      require(std::abs(kravatek::comparisonRms(a, rate) -
+                       kravatek::comparisonRms(lastAudition_, rate)) < 1e-6,
+              "Universal A/B mismatch");
+      stop();
+      saveTo(smokeDirectory_.getChildFile("universal-session.json"));
+      smokeSaved_ = encodeSession(session_);
+      smokeStage_ = 6;
+      loadFrom(smokeDirectory_.getChildFile("universal-session.json"));
+      return;
+    }
+    if (smokeStage_ == 6) {
+      require(encodeSession(session_) == smokeSaved_,
+              "Browser recipe/session changed on reload");
+      exportTo(smokeDirectory_.getChildFile("gui-smoke-004.wav"));
+      const auto side =
+          decodeSession(smokeDirectory_.getChildFile("gui-smoke-004.krava.json")
+                            .loadFileAsString()
+                            .toStdString());
+      require(render(side.library.at(0)).mix == render(current()).mix,
+              "Universal GUI export metadata changed audio");
+      smokeStage_ = 7;
+      history_.onClick();
+      return;
+    }
+    if (smokeStage_ == 7) {
+      require(session_.visible.size() == session_.library.entries().size(),
+              "Universal HISTORY lost records");
+
       auto *outer = findParentComponentOfClass<juce::Viewport>();
       require(outer != nullptr, "Missing outer viewport");
       const auto previous = outer->getBounds();
@@ -1387,9 +1636,17 @@ void GeneticLab::smokeAdvance() {
       graph_.setAmplitudeMode(false);
       juce::DynamicObject::Ptr report = new juce::DynamicObject;
       report->setProperty("result", "passed");
-      report->setProperty("theme", "krava-genetic-003");
+      report->setProperty("theme", "krava-universal-004");
       report->setProperty("product", "KRAVA-KICK LAB");
-      report->setProperty("engine", engineVersion);
+      report->setProperty("engine", universalVersion);
+      report->setProperty("universalProfiles", smokeProfile_);
+      report->setProperty("universalCandidates", smokeProfile_ * 4);
+      report->setProperty("long808AndTuning", true);
+      report->setProperty("universalEvolvedChildren", 8);
+      report->setProperty("universalLockedLayersExact", true);
+      report->setProperty("persistentHistory", true);
+      report->setProperty("advancedDistortionAndPhase", true);
+      report->setProperty("legacy003Verified", true);
       report->setProperty("generatedCandidates", 20);
       report->setProperty("evolvedChildren", 8);
       report->setProperty("exactLockedSubAndAttack", true);
@@ -1422,4 +1679,136 @@ void GeneticLab::smokeDone(bool ok, juce::String error) {
   auto done = std::move(smokeCompletion_);
   if (done)
     done(ok, error);
+}
+
+void GeneticLab::syncBrowser() {
+  families_ = {"GENETIC 0.3"};
+  for (const auto &p : profiles_)
+    if (std::find(families_.begin(), families_.end(), p.family) ==
+        families_.end())
+      families_.push_back(p.family);
+  if (session_.settings.universal &&
+      std::find(families_.begin(), families_.end(),
+                session_.settings.universal->profile.family) == families_.end())
+    families_.push_back(session_.settings.universal->profile.family);
+  genre_.clear(juce::dontSendNotification);
+  for (std::size_t i = 0; i < families_.size(); ++i)
+    genre_.addItem(families_[i], static_cast<int>(i + 1));
+  const bool universal = session_.settings.universal.has_value();
+  mode_.setVisible(!universal);
+  subgenre_.setVisible(universal);
+  for (auto *c : {&character_, &architecture_, &note_})
+    c->setEnabled(universal && !busy_);
+  if (!universal) {
+    genre_.setSelectedId(1, juce::dontSendNotification);
+    return;
+  }
+  const auto &r = *session_.settings.universal;
+  genre_.setSelectedId(
+      static_cast<int>(
+          std::find(families_.begin(), families_.end(), r.profile.family) -
+          families_.begin() + 1),
+      juce::dontSendNotification);
+  browserProfiles_.clear();
+  subgenre_.clear(juce::dontSendNotification);
+  int selected = 0;
+  for (const auto &p : profiles_)
+    if (p.family == r.profile.family) {
+      browserProfiles_.push_back(p);
+      const auto id = static_cast<int>(browserProfiles_.size());
+      subgenre_.addItem(p.name, id);
+      if (p.id == r.profile.id && p.digest == r.profile.digest)
+        selected = id;
+    }
+  if (!selected) {
+    browserProfiles_.push_back(r.profile);
+    selected = static_cast<int>(browserProfiles_.size());
+    subgenre_.addItem(r.profile.name + " / SAVED", selected);
+  }
+  subgenre_.setSelectedId(selected, juce::dontSendNotification);
+  character_.setSelectedId(static_cast<int>(r.character) + 1,
+                           juce::dontSendNotification);
+  architecture_.setSelectedId(r.overrideArchitecture == Architecture::count
+                                  ? 1
+                                  : static_cast<int>(r.overrideArchitecture) +
+                                        2,
+                              juce::dontSendNotification);
+  note_.setSelectedId(r.note == 0 ? 1 : r.note + 2, juce::dontSendNotification);
+}
+void GeneticLab::chooseGenre() {
+  const auto at = genre_.getSelectedId() - 1;
+  if (at < 0 || at >= static_cast<int>(families_.size()))
+    return;
+  if (at == 0)
+    session_.settings.universal.reset();
+  else
+    for (const auto &p : profiles_)
+      if (p.family == families_[static_cast<std::size_t>(at)]) {
+        auto request = session_.settings.universal.value_or(UniversalRequest{});
+        request.profile = p;
+        session_.settings.universal = request;
+        break;
+      }
+  dirty_ = true;
+  syncBrowser();
+  updateOverlap();
+}
+juce::CallOutBox &GeneticLab::openDetails() {
+  const juce::Component::SafePointer<GeneticLab> safe(this);
+  auto panel = std::make_unique<UniversalControls>(current(), [safe](auto fn) {
+    if (safe)
+      safe->modify(std::move(fn));
+  });
+  return juce::CallOutBox::launchAsynchronously(
+      std::move(panel), getLocalArea(&details_, details_.getLocalBounds()),
+      this);
+}
+void GeneticLab::updateOverlap() {
+  if (session_.selected < 0)
+    return;
+  const auto &g = current();
+  const auto found = cache_.find(g.id);
+  const auto seconds = found == cache_.end()
+                           ? std::max({g.sub.duration, g.attack.duration,
+                                       g.body.duration, g.tail.duration})
+                           : found->second.features.effectiveSeconds;
+  const auto beat = 60 / session_.bpm;
+  const bool exceeds = seconds > beat;
+  overlap_.setColour(juce::Label::textColourId,
+                     exceeds ? krui::pink : krui::muted);
+  overlap_.setFont(krui::mono(9));
+  overlap_.setText(
+      exceeds
+          ? juce::String("TAIL > BEAT / ") +
+                juce::String(static_cast<int>(std::lround(seconds * 1000))) +
+                " > " +
+                juce::String(static_cast<int>(std::lround(beat * 1000))) +
+                " ms\n" +
+                (session_.loop ? "LOOP trims tail; OFF = full one-shot"
+                               : "ONE-SHOT / full tail")
+          : (session_.settings.universal
+                 ? "PROFILE BPM " +
+                       juce::String(static_cast<int>(
+                           session_.settings.universal->profile.bpmLow)) +
+                       " - " +
+                       juce::String(static_cast<int>(
+                           session_.settings.universal->profile.bpmHigh)) +
+                       " / guide"
+                 : "GSE 0.3 / original generation"),
+      juce::dontSendNotification);
+}
+void GeneticLab::smokeUniversal() {
+  const auto &p = profiles_.at(static_cast<std::size_t>(smokeProfile_));
+  const auto family = std::find(families_.begin(), families_.end(), p.family);
+  require(family != families_.end(), "Profile family missing from browser");
+  genre_.setSelectedId(static_cast<int>(family - families_.begin() + 1),
+                       juce::sendNotificationSync);
+  character_.setSelectedId(1, juce::sendNotificationSync);
+  architecture_.setSelectedId(1, juce::sendNotificationSync);
+  note_.setSelectedId(smokeProfile_ == 6 ? 35 : 1,
+                      juce::sendNotificationSync); // 33 + 2
+  novelty_.setValue(75, juce::sendNotificationSync);
+  count_.setSelectedId(4, juce::sendNotificationSync);
+  seed_.setText(juce::String(44000 + smokeProfile_), false);
+  generate_.onClick();
 }

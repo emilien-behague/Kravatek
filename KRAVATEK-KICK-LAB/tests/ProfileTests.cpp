@@ -63,12 +63,15 @@ void campaign() {
   report << "profile,seed,rate,seconds,effectiveSeconds,f0,confidence,peakDb,"
             "rmsDb,centroidHz,lowFraction,midFraction,highFraction,"
             "transientFraction,safetyGain\n";
+  Session reference;
   int count = 0;
   for (const auto &p : ps) {
     UniversalRequest request{p};
     for (int i = 0; i < 3; ++i) {
       auto g = generateUniversal(request, static_cast<std::uint32_t>(i + 1),
                                  .2 + .4 * i);
+      reference.visible.push_back(
+          static_cast<int>(reference.library.append(g)));
       for (auto rate : {44100., 48000.}) {
         auto r = render(g, rate);
         auto f = measure(r.mix, rate, true);
@@ -83,14 +86,15 @@ void campaign() {
             r.mix ==
                 render(generateUniversal(request, g.seed, g.novelty), rate).mix,
             "Profile signal not repeatable");
-        auto saved = decodeSession(encodeSound(g, rate));
+        auto saved = decodeSession(encodeSound(g, rate, request));
         check(render(saved.library.at(0), rate).mix == r.mix,
               "Profile saved signal changed");
         const auto stem = p.id + "-" + std::to_string(i + 1) + "-" +
                           std::to_string(static_cast<int>(rate));
         kravatek::writePcm24(root / (stem + ".wav"), r.mix, rate,
-                             encodeSound(g, rate));
-        std::ofstream(root / (stem + ".krava.json")) << encodeSound(g, rate);
+                             encodeSound(g, rate, request));
+        std::ofstream(root / (stem + ".krava.json"))
+            << encodeSound(g, rate, request);
         report << p.id << ',' << g.seed << ',' << rate << ','
                << f.basic.durationSeconds << ',' << f.effectiveSeconds << ','
                << f.fundamentalHz << ',' << f.fundamentalConfidence << ','
@@ -109,6 +113,17 @@ void campaign() {
       }
     }
   }
+  reference.selected = 0;
+  reference.compareA = 1;
+  reference.compareB = 16;
+  reference.settings.universal = UniversalRequest{ps.front()};
+  reference.settings.count = 4;
+  reference.settings.novelty = .2;
+  const auto sessionJson = encodeSession(reference);
+  check(decodeSession(sessionJson).library.entries() ==
+            reference.library.entries(),
+        "Reference collection changed");
+  std::ofstream(root / "reference.session.json") << sessionJson;
   check(hashes.size() == 24, "Profiles contain exact duplicate sounds");
   std::ofstream distance(root / "profile-distances.csv");
   distance << "profileA,profileB,descriptorDistance\n";

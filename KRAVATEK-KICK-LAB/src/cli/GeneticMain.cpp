@@ -175,7 +175,8 @@ int main(int argc, char **argv) {
                                                            : "krava-kick.wav");
     const auto write = [&](const Genome &g, const std::filesystem::path &path) {
       auto r = render(g, session.settings.sampleRate, false);
-      const auto json = encodeSound(g, session.settings.sampleRate);
+      const auto json = encodeSound(g, session.settings.sampleRate,
+                                    session.settings.universal);
       kravatek::writePcm24(path, r.mix, r.sampleRate, json);
       auto sidecar = path;
       sidecar.replace_extension(".krava.json");

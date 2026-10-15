@@ -3,7 +3,7 @@
 class KickLabApplication final : public juce::JUCEApplication {
 public:
     const juce::String getApplicationName() override { return "KRAVA-KICK LAB"; }
-    const juce::String getApplicationVersion() override { return "0.3.0"; }
+    const juce::String getApplicationVersion() override { return "0.4.0"; }
     bool moreThanOneInstanceAllowed() override { return true; }
     void initialise(const juce::String& commandLine) override {
         window_ = std::make_unique<Window>();
@@ -33,11 +33,11 @@ private:
         Workspace() {
             instrument_ = new MainComponent;
             setViewedComponent(instrument_, true); setScrollBarsShown(true, true);
-            setSize(1440, 1100);
+            setSize(1440, 1200);
         }
         void resized() override {
             juce::Viewport::resized();
-            instrument_->setSize(std::max(1280, getMaximumVisibleWidth()), std::max(1100, getMaximumVisibleHeight()));
+            instrument_->setSize(std::max(1280, getMaximumVisibleWidth()), std::max(1200, getMaximumVisibleHeight()));
         }
         MainComponent& instrument() {return *instrument_;}
     private:
@@ -45,7 +45,7 @@ private:
     };
     class Window final : public juce::DocumentWindow {
     public:
-        Window() : DocumentWindow(juce::String::fromUTF8("KRAVA-KICK LAB — GENETIC SOUND ENGINE 0.3"),
+        Window() : DocumentWindow(juce::String::fromUTF8("KRAVA-KICK LAB — UNIVERSAL KICK ENGINE 0.4"),
                     krui::blue, DocumentWindow::allButtons) {
             setLookAndFeel(&lookAndFeel_);
             setUsingNativeTitleBar(false);

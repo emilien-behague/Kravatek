@@ -44,7 +44,7 @@ inline void frame(juce::Graphics &g, juce::Rectangle<int> bounds,
 class Brand final : public juce::Component {
   void paint(juce::Graphics &g) override {
     auto b = getLocalBounds();
-    frame(g, b, "KRAVA-KICK.EXE / GENETIC LAB");
+    frame(g, b, "KRAVA-KICK.EXE / UNIVERSAL LAB");
     auto face = b.reduced(7).withTrimmedTop(25);
     g.setGradientFill(juce::ColourGradient(
         pink, 0, static_cast<float>(face.getY()), juce::Colour(0xffdfaeff),
@@ -84,7 +84,7 @@ class Brand final : public juce::Component {
                        scale);
     }
     g.setFont(mono(11, true));
-    g.drawText("L A B   /   G E N E T I C  0.3",
+    g.drawText("L A B   /   U N I V E R S A L  0.4",
                face.withY(face.getBottom() - 18).withHeight(16),
                juce::Justification::centred);
   }

@@ -85,8 +85,9 @@ Locks locksFrom(const var &v) {
   X(pivotTime)                                                                 \
   X(settleTime)                                                                \
   X(curve)                                                                     \
-  X(duration) X(attack) X(release) X(ampCurve) X(level) X(harmonics) X(fm)     \
-      X(fmTime) X(drive) X(fold) X(cutoff) X(resonance) X(sweep) X(phase)
+  X(duration)                                                                  \
+  X(attack) X(release) X(ampCurve) X(level) X(harmonics) X(fm) X(fmTime)       \
+      X(drive) X(fold) X(cutoff) X(resonance) X(sweep) X(phase)
 #define TAIL_FIELDS(X)                                                         \
   X(hz)                                                                        \
   X(endHz)                                                                     \
@@ -94,8 +95,7 @@ Locks locksFrom(const var &v) {
   X(decay)                                                                     \
   X(attack)                                                                    \
   X(release)                                                                   \
-  X(level) X(motion) X(speed) X(cutoff) X(resonance) X(sweep) X(drive)         \
-      X(phase)
+  X(level) X(motion) X(speed) X(cutoff) X(resonance) X(sweep) X(drive) X(phase)
 var fxVar(const FxGenes &f) {
   auto v = object();
   v->setProperty("kind", static_cast<int>(f.kind));
@@ -103,8 +103,9 @@ var fxVar(const FxGenes &f) {
   PUT(stageDrive)
   PUT(preCut)
   PUT(postCut)
-  PUT(bias) PUT(multiband) PUT(crossover) PUT(lowDrive) PUT(highDrive)
-      PUT(driveDecay) PUT(driveMotion) PUT(bits) PUT(holdHz)
+  PUT(bias)
+  PUT(multiband) PUT(crossover) PUT(lowDrive) PUT(highDrive) PUT(driveDecay)
+      PUT(driveMotion) PUT(bits) PUT(holdHz)
 #undef PUT
           return var(v.get());
 }
@@ -118,8 +119,9 @@ FxGenes fxFrom(const var &v) {
   GET(stageDrive)
   GET(preCut)
   GET(postCut)
-  GET(bias) GET(multiband) GET(crossover) GET(lowDrive) GET(highDrive)
-      GET(driveDecay) GET(driveMotion) GET(bits) GET(holdHz)
+  GET(bias)
+  GET(multiband) GET(crossover) GET(lowDrive) GET(highDrive) GET(driveDecay)
+      GET(driveMotion) GET(bits) GET(holdHz)
 #undef GET
           return f;
 }
@@ -275,7 +277,8 @@ Genome genomeFrom(const var &root) {
 std::string encodeSession(const Session &s) {
   validateSession(s);
   auto root = object();
-  const bool universal = s.settings.universal.has_value() ||
+  const bool universal =
+      s.settings.universal.has_value() ||
       std::any_of(s.library.entries().begin(), s.library.entries().end(),
                   [](const Genome &g) { return g.engine == universalVersion; });
   root->setProperty("schema",
@@ -380,10 +383,12 @@ Session decodeSession(std::string_view json) {
   validateSession(s);
   return s;
 }
-std::string encodeSound(const Genome &g, double rate) {
+std::string encodeSound(const Genome &g, double rate,
+                        const std::optional<UniversalRequest> &recipe) {
   Session s;
   s.selected = static_cast<int>(s.library.append(g));
   s.visible = {s.selected};
+  s.settings.universal = recipe;
   s.settings.mode = g.mode;
   s.settings.seed = g.seed;
   s.settings.novelty = g.novelty;

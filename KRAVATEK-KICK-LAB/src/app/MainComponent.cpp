@@ -157,7 +157,7 @@ MainComponent::MainComponent() {
     genetic_->stopAudio=[this]{playback_.stop();};genetic_->chooseAudio=[this]{chooseAudio();};
     genetic_->openLegacy=[this](const juce::File& f){showClassic(true);loadFrom(f);};
     modeSwitch_.setWantsKeyboardFocus(false);modeSwitch_.onClick=[this]{showClassic(!classicShowing_);};
-    setSize(1440,1100);showClassic(false);
+    setSize(1440,1200);showClassic(false);
 }
 
 MainComponent::~MainComponent() {
@@ -509,7 +509,7 @@ void MainComponent::runGeneticSmokeTest(const juce::File& directory,std::functio
     showClassic(false);genetic_->runSmokeTest(directory,[this,directory,done=std::move(done)](bool ok,juce::String error){
         if(ok){try{auto report=juce::JSON::parse(directory.getChildFile("gui-smoke.json").loadFileAsString());auto* object=report.getDynamicObject();if(!object)throw std::runtime_error("Missing genetic GUI report");object->setProperty("audioDeviceActive",audioActive_.load());object->setProperty("audioCallbacks",static_cast<juce::int64>(callbacks_.load()));object->setProperty("classic002Verified",true);
             if(!directory.getChildFile("gui-smoke.json").replaceWithText(juce::JSON::toString(report)))throw std::runtime_error("Cannot save complete GUI report");
-            auto image=createComponentSnapshot(getLocalBounds());auto stream=directory.getChildFile("instrument-003.png").createOutputStream();if(!stream||!stream->setPosition(0)||stream->truncate().failed()||!juce::PNGImageFormat().writeImageToStream(image,*stream))throw std::runtime_error("Cannot save genetic screenshot");
+            auto image=createComponentSnapshot(getLocalBounds());auto stream=directory.getChildFile("instrument-004.png").createOutputStream();if(!stream||!stream->setPosition(0)||stream->truncate().failed()||!juce::PNGImageFormat().writeImageToStream(image,*stream))throw std::runtime_error("Cannot save genetic screenshot");
         }catch(const std::exception& e){ok=false;error=e.what();}}
         done(ok,error);
     });

@@ -96,7 +96,7 @@ void validateSession(const Session &session) {
   for (auto value : session.visible)
     if (value < 0 || value >= size)
       throw std::invalid_argument("Invalid visible generation");
-  if (!std::isfinite(session.bpm) || session.bpm < 80 || session.bpm > 220)
+  if (!std::isfinite(session.bpm) || session.bpm < 40 || session.bpm > 400)
     throw std::invalid_argument("Invalid tempo");
   const auto &r = session.settings;
   if (r.universal) {

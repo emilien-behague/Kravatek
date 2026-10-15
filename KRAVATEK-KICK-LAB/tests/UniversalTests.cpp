@@ -1,8 +1,12 @@
+#include "dsp/Playback.h"
+#include "dsp/WavWriter.h"
 #include "genetic/Features.h"
 #include "genetic/LayerRenderer.h"
+#include "genetic/Profile.h"
 #include "genetic/UniversalDsp.h"
 #include <algorithm>
 #include <cmath>
+#include <filesystem>
 #include <functional>
 #include <iostream>
 #include <map>
@@ -89,6 +93,77 @@ void distortion() {
   }
   stable(render(g));
 }
+void spectrum() {
+  auto g = universalFoundation(Architecture::analog);
+  g.sub.level = g.attack.level = g.tail.level = 0;
+  g.body.kind = BodyKind::sine;
+  g.body.startHz = g.body.pivotHz = 1800;
+  g.body.endHz = 150;
+  g.body.pivotTime = .12;
+  g.body.settleTime = .3;
+  g.body.duration = 1;
+  g.body.drive = 30;
+  g.body.fold = 0;
+  g.body.cutoff = 16000;
+  g.body.resonance = 0;
+  g.body.sweep = 0;
+  g.body.fx.preCut = g.body.fx.postCut = 0;
+  g.body.fx.kind = DistortionKind::tanh;
+  auto r = render(g);
+  const auto mag = [&](double hz) {
+    double re = 0, im = 0;
+    for (int i = 0; i < 3456; ++i) {
+      const auto w = .5 - .5 * std::cos(2 * std::numbers::pi * i / 3455),
+                 a = 2 * std::numbers::pi * hz * i / 48000;
+      const auto v = r.mix[static_cast<std::size_t>(1536 + i)] * w;
+      re += v * std::cos(a);
+      im -= v * std::sin(a);
+    }
+    return std::hypot(re, im);
+  };
+  const auto ratio = mag(600) / mag(1800);
+  std::cout << "UKE saturation alias 600/1800=" << 20 * std::log10(ratio)
+            << " dB\n";
+  check(ratio < .0056, "Universal oversampling regression");
+  // Every distortion control has an audible-domain effect in an active context.
+  for (const auto &[name, value] :
+       std::vector<std::pair<std::string, double>>{{"stageDrive", 20},
+                                                   {"preCut", 400},
+                                                   {"postCut", 900},
+                                                   {"bias", -.7},
+                                                   {"multiband", 1},
+                                                   {"lowDrive", 18},
+                                                   {"highDrive", 28},
+                                                   {"driveDecay", .7},
+                                                   {"driveMotion", 1},
+                                                   {"bits", 4},
+                                                   {"holdHz", 1800},
+                                                   {"crossover", 600}}) {
+    auto base = universalFoundation(Architecture::distortedHard);
+    base.body.fx.driveMotion = .6;
+    base.body.fx.kind = (name == "bits" || name == "holdHz")
+                            ? DistortionKind::digital
+                            : DistortionKind::asymmetric;
+    auto before = render(base).layers[2];
+    parameterSpec("body.fx." + name).value(base) = value;
+    check(render(base).layers[2] != before, "Universal FX parameter inactive");
+  }
+}
+void longBuffer() {
+  auto g = universalFoundation(Architecture::tonal);
+  g.sub.duration = 4;
+  g.sub.decay = 2;
+  g.body.level = g.attack.level = g.tail.level = 0;
+  auto r = render(g, 192000, false);
+  check(r.mix.size() == 768000, "Long render truncated");
+  stable(r);
+  kravatek::Playback p;
+  check(p.queue(r.mix), "Long playback buffer rejected");
+  kravatek::writePcm24("long-universal.wav", r.mix, 192000, "test");
+  check(std::filesystem::file_size("long-universal.wav") > r.mix.size() * 3,
+        "Long WAV truncated");
+  std::filesystem::remove("long-universal.wav");
+}
 void tuning() {
   auto g = universalFoundation(Architecture::tonal);
   g.body.level = g.attack.level = g.tail.level = 0;
@@ -103,6 +178,19 @@ void tuning() {
     stable(r);
     auto f = measure(r.mix, rate);
     check(std::abs(f.fundamentalHz - 55) < 1.5, "Tuned fundamental incorrect");
+  }
+  for (int note : {24, 60}) {
+    auto high = universalFoundation(Architecture::tonal);
+    high.body.level = high.attack.level = high.tail.level = 0;
+    high.sub.duration = .8;
+    high.sub.decay = .3;
+    tune(high, note);
+    for (auto rate : {44100., 48000.}) {
+      auto signal = render(high, rate);
+      auto f = measure(signal.mix, rate, true);
+      check(std::abs(f.fundamentalHz - midiFrequency(note)) < 2,
+            "Universal note estimator outside low bass range");
+    }
   }
   const auto oldSub = g.sub;
   tune(g, 45, {true, false, false, false});
@@ -133,6 +221,8 @@ void versioned() {
 int main(int argc, char **argv) {
   try {
     std::map<std::string, std::function<void()>> t{
+        {"universal-spectrum", spectrum},
+        {"universal-long-buffer", longBuffer},
         {"universal-architectures", architectures},
         {"universal-distortion", distortion},
         {"universal-tuning", tuning},

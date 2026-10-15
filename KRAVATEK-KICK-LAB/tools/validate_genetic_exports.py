@@ -13,14 +13,18 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--renderer', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--universal', action='store_true')
     args = parser.parse_args()
     renderer, output = args.renderer.resolve(), args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
     records = []
+    profiles = subprocess.check_output([str(renderer), '--list-profiles'], text=True).splitlines() if args.universal else []
+    styles = [line.split(' / ')[0] for line in profiles] if args.universal else ['deep', 'hard-psy', 'schranz', 'experimental', 'mutant']
+    option = '--profile' if args.universal else '--mode'
     for rate in (44100, 48000):
-        for mode in ('deep', 'hard-psy', 'schranz', 'experimental', 'mutant'):
+        for mode in styles:
             path = output / f'{mode}-{rate}.wav'
-            subprocess.run([str(renderer), '--mode', mode, '--seed', '123456789',
+            subprocess.run([str(renderer), option, mode, '--seed', '123456789',
                             '--novelty', '.75', '--sample-rate', str(rate),
                             '--output', str(path)], check=True)
             with wave.open(str(path), 'rb') as wav:

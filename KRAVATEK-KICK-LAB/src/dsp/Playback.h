@@ -12,7 +12,7 @@ namespace kravatek {
 // Slots are owned either by the producer, the mailbox, or the consumer.
 class Playback {
 public:
-    static constexpr std::size_t maxSamples = 384000;
+    static constexpr std::size_t maxSamples = 768000;
     Playback();
     bool queue(std::span<const float> samples, std::size_t loopPeriodFrames = 0) noexcept;
     void stop() noexcept;

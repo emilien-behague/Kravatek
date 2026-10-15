@@ -2,6 +2,8 @@
 #include "GeneticGraph.h"
 #include "GenomeCards.h"
 #include "ParameterControl.h"
+#include "UniversalControls.h"
+#include "genetic/ProfileIO.h"
 #include "genetic/SessionIO.h"
 #include <map>
 #include <optional>
@@ -56,6 +58,20 @@ private:
   std::map<std::string, kravatek::genetic::Candidate> cache_;
   std::map<std::string, kravatek::genetic::Render> auditionCache_;
   std::jthread worker_;
+  std::vector<kravatek::genetic::GenreProfile> profiles_, browserProfiles_;
+  std::vector<std::string> families_;
+  juce::String catalogWarning_;
+  juce::ComboBox genre_, subgenre_, character_, architecture_, note_;
+  juce::TextButton details_{"SYNTH / FX"};
+  juce::Label genreLabel_, subgenreLabel_, characterLabel_, architectureLabel_,
+      noteLabel_, overlap_;
+  juce::Rectangle<int> browserBounds_;
+  void syncBrowser();
+  void chooseGenre();
+  juce::CallOutBox &openDetails();
+  void updateOverlap();
+  int smokeProfile_ = 0;
+  void smokeUniversal();
   std::atomic<int> progress_{0}, total_{0};
   int listeningIndex_ = -1;
   bool listeningComparison_ = false;

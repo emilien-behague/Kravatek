@@ -104,9 +104,11 @@ Features measure(std::span<const float> samples, double rate,
   // Low-pass before decimating to ~2 kHz. Autocorrelation is an estimate of the
   // dominant low-frequency periodicity, with confidence; complex tails may be
   // ambiguous.
-  const auto step = std::max(1, static_cast<int>(rate / 2000));
+  const auto step =
+      std::max(1, static_cast<int>(rate / (completeEdges ? 4000 : 2000)));
   const auto lowRate = rate / step;
-  const auto alpha = 1 - std::exp(-2 * std::numbers::pi * 280 / rate);
+  const auto alpha =
+      1 - std::exp(-2 * std::numbers::pi * (completeEdges ? 600 : 280) / rate);
   double p1 = 0, p2 = 0, p3 = 0;
   std::vector<double> low;
   const auto stop = std::min(count, static_cast<std::size_t>(rate * .4));
@@ -118,8 +120,9 @@ Features measure(std::span<const float> samples, double rate,
         i > static_cast<std::size_t>(rate * .025))
       low.push_back(p3);
   }
-  const auto minLag = std::max(2, static_cast<int>(lowRate / 150)),
-             maxLag = static_cast<int>(lowRate / 25);
+  const auto minLag = std::max(
+                 2, static_cast<int>(lowRate / (completeEdges ? 500 : 150))),
+             maxLag = static_cast<int>(lowRate / (completeEdges ? 20 : 25));
   if (low.size() > static_cast<std::size_t>(maxLag * 3)) {
     double mean = 0;
     for (auto v : low)
