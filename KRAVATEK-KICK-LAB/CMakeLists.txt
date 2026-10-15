@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(KravatekKickLab VERSION 0.2.0 LANGUAGES C CXX)
+project(KravatekKickLab VERSION 0.3.0 LANGUAGES C CXX)
 if(WIN32)
     enable_language(RC)
 endif()
@@ -32,6 +32,7 @@ endif()
 
 add_executable(kravatek-render src/cli/Main.cpp)
 target_link_libraries(kravatek-render PRIVATE kravatek_dsp)
+set_target_properties(kravatek-render PROPERTIES OUTPUT_NAME krava-render)
 
 if(KRAVATEK_BUILD_TESTS)
     enable_testing()
@@ -39,7 +40,7 @@ if(KRAVATEK_BUILD_TESTS)
     target_link_libraries(kravatek-tests PRIVATE kravatek_dsp)
     add_executable(krava-genetic-tests tests/GeneticTests.cpp)
     target_link_libraries(krava-genetic-tests PRIVATE kravatek_dsp)
-    foreach(check IN ITEMS genetic-identity genetic-prng genetic-layers genetic-modes genetic-measures genetic-100 genetic-locks)
+    foreach(check IN ITEMS genetic-identity genetic-prng genetic-layers genetic-modes genetic-measures genetic-100 genetic-locks genetic-spectrum)
         add_test(NAME ${check} COMMAND krava-genetic-tests ${check})
         set_tests_properties(${check} PROPERTIES TIMEOUT 300 WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/test-output")
     endforeach()
@@ -89,19 +90,20 @@ if(KRAVATEK_BUILD_APP)
     add_executable(krava-genome-render src/cli/GeneticMain.cpp)
     target_link_libraries(krava-genome-render PRIVATE krava_state)
     add_executable(KravatekKickLab WIN32 src/app/Main.cpp src/app/MainComponent.cpp
-        src/app/EnvelopeEditor.cpp src/app/PresetState.cpp)
+        src/app/EnvelopeEditor.cpp src/app/PresetState.cpp src/app/GeneticLab.cpp src/app/GeneticGraph.cpp)
     if(WIN32)
         target_sources(KravatekKickLab PRIVATE src/app/Windows.rc)
     endif()
     target_compile_definitions(KravatekKickLab PRIVATE
         JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1 JUCE_STANDALONE_APPLICATION=1
         JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_JACK=0
-        JUCE_APPLICATION_NAME_STRING="KRAVATEK KICK LAB"
+        JUCE_APPLICATION_NAME_STRING="KRAVA-KICK LAB"
         JUCE_APPLICATION_VERSION_STRING="${PROJECT_VERSION}")
-    target_link_libraries(KravatekKickLab PRIVATE kravatek_dsp
+    target_link_libraries(KravatekKickLab PRIVATE kravatek_dsp krava_state
         juce::juce_gui_basics juce::juce_audio_devices)
     if(MSVC)
         target_compile_options(KravatekKickLab PRIVATE /utf-8 /Zc:__cplusplus)
     endif()
-    install(TARGETS KravatekKickLab kravatek-render RUNTIME DESTINATION .)
+    set_target_properties(KravatekKickLab PROPERTIES OUTPUT_NAME KravaKickLab)
+    install(TARGETS KravatekKickLab kravatek-render krava-genome-render RUNTIME DESTINATION .)
 endif()

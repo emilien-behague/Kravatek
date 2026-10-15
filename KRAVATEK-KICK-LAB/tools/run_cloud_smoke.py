@@ -36,17 +36,17 @@ def main():
             runtime_env = dict(os.environ,
                 DISPLAY=f':{display}', ALSA_CONFIG_PATH=str(PROJECT / 'tools/cloud-asound.conf'),
                 XDG_CACHE_HOME=str(TOOLS / 'cache'), XDG_CONFIG_HOME=str(TOOLS / 'config'))
-            result = subprocess.run([str(PROJECT / 'build-linux/KravatekKickLab'),
+            result = subprocess.run([str(PROJECT / 'build-linux/KravaKickLab'),
                 '--smoke-test', str(output)], cwd=PROJECT, env=runtime_env,
-                capture_output=True, text=True, timeout=45)
+                capture_output=True, text=True, timeout=180)
             (output / 'application.log').write_text(result.stdout + result.stderr)
             result.check_returncode()
             report = json.loads(report_path.read_text())
-            if report.get('result') != 'passed' or report.get('theme') != 'kravatek-instrument-002':
+            if report.get('result') != 'passed' or report.get('theme') != 'krava-genetic-003':
                 raise RuntimeError('GUI test did not pass')
             # A screenshot must be one complete PNG, including on repeated runs.
             # FileOutputStream otherwise appends to an existing screenshot by default.
-            png = (output / 'prototype-002.png').read_bytes()
+            png = (output / 'instrument-003.png').read_bytes()
             if not png.startswith(b'\x89PNG\r\n\x1a\n'):
                 raise RuntimeError('Screenshot is not PNG')
             offset = 8

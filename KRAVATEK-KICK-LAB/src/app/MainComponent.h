@@ -1,5 +1,6 @@
 #pragma once
 #include "EnvelopeEditor.h"
+#include "GeneticLab.h"
 #include "ParameterControl.h"
 #include "PresetState.h"
 #include "dsp/Playback.h"
@@ -16,10 +17,15 @@ public:
     void resized() override;
     bool keyPressed(const juce::KeyPress&) override;
     void runSmokeTest(const juce::File& directory);
+    void runGeneticSmokeTest(const juce::File&,std::function<void(bool,juce::String)>);
+    void showClassic(bool);
 private:
     enum Control {start, end, drop, bend, length, attack, ampShape, release,
                   drive, fm, fmTime, harmonics, tailLevel, tailTime, tailRatio, tailMotion,
                   cutoff, resonance, sweep, shape, click, clickLength, sub, subTime, controlCount};
+    std::unique_ptr<GeneticLab> genetic_;
+    juce::TextButton modeSwitch_ {"CLASSIC 0.2"};
+    bool classicShowing_=true;
     PresetState state_;
     kravatek::Playback playback_;
     juce::AudioDeviceManager devices_;

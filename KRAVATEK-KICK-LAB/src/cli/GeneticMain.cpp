@@ -8,6 +8,11 @@
 #include <map>
 #include <stdexcept>
 using namespace kravatek::genetic;
+namespace {
+std::filesystem::path utf8Path(const std::string &text) {
+  return std::filesystem::path(std::u8string(text.begin(), text.end()));
+}
+} // namespace
 int main(int argc, char **argv) {
   try {
     std::map<std::string, std::string> args;
@@ -39,7 +44,7 @@ int main(int argc, char **argv) {
     };
     Session session;
     if (args.contains("--input")) {
-      const auto path = std::filesystem::u8path(args.at("--input"));
+      const auto path = utf8Path(args.at("--input"));
       if (std::filesystem::file_size(path) > 16 * 1024 * 1024)
         throw std::invalid_argument("Session too large");
       std::ifstream in(path, std::ios::binary);
@@ -87,8 +92,8 @@ int main(int argc, char **argv) {
         }
     }
     validateSession(session);
-    const auto output = std::filesystem::u8path(
-        args.contains("--output") ? args.at("--output") : "krava-kick.wav");
+    const auto output = utf8Path(args.contains("--output") ? args.at("--output")
+                                                           : "krava-kick.wav");
     const auto write = [&](const Genome &g, const std::filesystem::path &path) {
       auto r = render(g, session.settings.sampleRate, false);
       const auto json = encodeSound(g, session.settings.sampleRate);

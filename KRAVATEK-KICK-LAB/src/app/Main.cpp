@@ -2,8 +2,8 @@
 
 class KickLabApplication final : public juce::JUCEApplication {
 public:
-    const juce::String getApplicationName() override { return "KRAVATEK KICK LAB"; }
-    const juce::String getApplicationVersion() override { return "0.2.0"; }
+    const juce::String getApplicationName() override { return "KRAVA-KICK LAB"; }
+    const juce::String getApplicationVersion() override { return "0.3.0"; }
     bool moreThanOneInstanceAllowed() override { return true; }
     void initialise(const juce::String& commandLine) override {
         window_ = std::make_unique<Window>();
@@ -13,12 +13,15 @@ public:
             if (index + 1 >= arguments.size()) { setApplicationReturnValue(2); quit(); return; }
             const auto output = juce::File::getCurrentWorkingDirectory().getChildFile(arguments[index + 1].unquoted());
             juce::Timer::callAfterDelay(300, [this, output] {
-                try { window_->content().runSmokeTest(output); }
+                try { window_->content().runSmokeTest(output);
+                    window_->content().runGeneticSmokeTest(output,[this](bool ok,juce::String error){
+                        if(!ok){juce::Logger::writeToLog("Genetic GUI failed: "+error);setApplicationReturnValue(1);}quit();
+                    });
+                }
                 catch (const std::exception& error) {
                     juce::Logger::writeToLog("GUI smoke failed: " + juce::String(error.what()));
-                    setApplicationReturnValue(1);
+                    setApplicationReturnValue(1);quit();
                 }
-                quit();
             });
         }
     }
@@ -30,11 +33,11 @@ private:
         Workspace() {
             instrument_ = new MainComponent;
             setViewedComponent(instrument_, true); setScrollBarsShown(true, true);
-            setSize(1380, 940);
+            setSize(1440, 1100);
         }
         void resized() override {
             juce::Viewport::resized();
-            instrument_->setSize(std::max(1100, getMaximumVisibleWidth()), std::max(860, getMaximumVisibleHeight()));
+            instrument_->setSize(std::max(1280, getMaximumVisibleWidth()), std::max(1100, getMaximumVisibleHeight()));
         }
         MainComponent& instrument() {return *instrument_;}
     private:
@@ -42,7 +45,7 @@ private:
     };
     class Window final : public juce::DocumentWindow {
     public:
-        Window() : DocumentWindow(juce::String::fromUTF8("KRAVATEK KICK LAB — INSTRUMENT 002"),
+        Window() : DocumentWindow(juce::String::fromUTF8("KRAVA-KICK LAB — GENETIC SOUND ENGINE 0.3"),
                     krui::blue, DocumentWindow::allButtons) {
             setLookAndFeel(&lookAndFeel_);
             setUsingNativeTitleBar(false);

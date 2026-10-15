@@ -52,3 +52,30 @@ Les sessions JSON conservent les génomes, filiations, générations visibles, s
 Une régression a révélé une perte de derniers bits dans les conversions numériques JSON de JUCE pour des petites durées. Les nouveaux gènes flottants sont donc écrits en chaînes décimales à 17 chiffres significatifs et relus avec `std::from_chars`. Les nouvelles sauvegardes 002 ajoutent un objet `_exact` ; la lecture des anciens fichiers sans cet objet conserve le comportement précédent. Tests : round-trip exact de 52 génomes et de 100 presets legacy, comparaison audio après rechargement, refus des versions/identités/paramètres invalides, WAV PCM 24 bits avec métadonnées, historique et populations reproductibles.
 
 L'outil `krava-genome-render` permet de générer des exemples et de rerendre un kick depuis une session sauvegardée sans interface. Le WAV Warehouse historique a été comparé au témoin d'avant modification et reste identique octet pour octet.
+
+## Lot E — laboratoire utilisable
+
+L'application démarre dans GENETIC LAB. Le bouton CLASSIC 0.2 conserve l'ancien éditeur et les presets 002 s'y ouvrent automatiquement. Le nouveau nom produit et l'identité bleu quadrillé/rose/cyan suivent la correction artistique du créateur. Capture réelle : [instrument-003.png](images/instrument-003.png).
+
+Les lots sont rendus par un worker annulable, avec progression et publication des résultats sur le thread graphique. Les cartes affichent onde réelle, nom, graine, génération, durée et RMS. HISTORY retrouve les parents et les lots précédents ; SAVE conserve toute cette bibliothèque. KEEP EDIT ajoute un enfant lorsque les paramètres ou courbes sont édités : l'original reste intact. Les paramètres sans effet pour l'architecture courante sont désactivés.
+
+PITCH permet de déplacer le départ, le véritable point intermédiaire et l'arrivée ; AMP agit sur attaque/courbure/extinction du body. LISTEN permet d'écouter séparément SUB, ATTACK, BODY ou TAIL, avec leur forme d'onde réelle. L'export reste celui du mix. Les deux sélecteurs A/B acceptent tout kick de la bibliothèque. MATCH RMS atténue uniquement le plus fort selon une fenêtre de 400 ms, à la fréquence réelle du périphérique, avec silence ajouté aux sons plus courts. Désactiver MATCH RMS restitue les niveaux réels. Cette comparaison n'est pas une égalisation de sonie LUFS.
+
+Le test GUI a réellement exécuté : génération de 20 EXPERIMENTAL à 75 %, vérification de 20 signaux distincts, choix d'un parent, 8 mutations SUB+ATTACK verrouillées et identiques au niveau des buffers, parent inchangé, édition pitch intermédiaire/amplitude/drive, A/B ajusté et réel, solo SUB identique, sauvegarde/rechargement exact d'une bibliothèque de 31 états, WAV+JSON et petit viewport avec défilement. La sortie ALSA de test est silencieuse : ce résultat ne constitue pas une écoute physique.
+
+## Fichiers modifiés par la mission
+
+- `src/genetic/Genome`, `LayerRenderer`, `Generator`, `Features`, `Population`, `SessionIO` : identité, couches, exploration, mesures, provenance et persistance.
+- `src/app/GeneticLab`, `GeneticGraph`, `GenomeCards` : laboratoire, courbes et bibliothèque.
+- `src/app/Main`, `MainComponent`, `InstrumentStyle`, `Windows.rc` : intégration, compatibilité, marque et interface.
+- `src/dsp/WavWriter`, `src/app/PresetState`, `src/cli/GeneticMain` : export partagé et sauvegarde exacte, CLI génétique.
+- `tests/GeneticTests`, `StateTests`, `LegacyChecks`, `CMakeLists.txt` : vérifications des lots et intégration.
+- `tools/run_cloud_smoke.py`, `build-windows.cmd`, `.github/workflows/windows.yml`, README et documentation : validation reproductible et livraison.
+
+## Limites explicites
+
+Le rendu de lots est en arrière-plan ; l'édition d'un seul son, certains solos et le premier rendu de préécoute restent synchrones et peuvent brièvement bloquer l'interface sur une machine lente. Annuler agit entre candidats. Une bibliothèque contient au plus 512 états ; il faut sauvegarder puis ouvrir une nouvelle session pour poursuivre au-delà. Les verrous régissent EVOLVE, pas une édition manuelle volontaire.
+
+Les courbes sont paramétriques à trois poignées, pas des enveloppes multipoints libres. Les gènes sont tous persistés, mais l'interface expose une sélection de paramètres à forte valeur ajoutée. La comparaison acoustique et la F0 restent des estimations ; aucun test ne valide la qualité musicale. Les interactions du mix et son atténuation de sécurité peuvent modifier la perception d'une couche dont le signal isolé reste strictement identique.
+
+Pas de prompteur/IA, VST3, import de samples, multibande, marketplace ni banque commerciale. La reproduction exacte exige aussi la même version de moteur, fréquence, plateforme et conditions mathématiques. Les dialogues natifs Windows, les périphériques du créateur et FL Studio nécessitent encore un essai sur son PC.

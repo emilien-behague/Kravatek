@@ -264,13 +264,50 @@ void exactLocks() {
             subtle.generation == parent.generation + 1,
         "Parent provenance missing");
 }
+
+void geneticSpectrum() {
+  auto g = foundation(Mode::deep);
+  g.sub.level = g.attack.level = g.tail.level = 0;
+  g.body.kind = BodyKind::sine;
+  g.body.startHz = g.body.pivotHz = 1800;
+  g.body.endHz = 150;
+  g.body.pivotTime = .12;
+  g.body.settleTime = .3;
+  g.body.duration = 1;
+  g.body.ampCurve = 2.3;
+  g.body.drive = 30;
+  g.body.fold = 0;
+  g.body.cutoff = 16000;
+  g.body.resonance = 0;
+  g.body.sweep = 0;
+  const auto r = render(g);
+  const auto magnitude = [&](double hz) {
+    double re = 0, im = 0;
+    constexpr int first = 1536, count = 3456;
+    for (int i = 0; i < count; ++i) {
+      const auto w = .5 - .5 * std::cos(2 * std::numbers::pi * i / (count - 1));
+      const auto a = 2 * std::numbers::pi * hz * i / 48000;
+      re += r.mix[static_cast<std::size_t>(first + i)] * w * std::cos(a);
+      im -= r.mix[static_cast<std::size_t>(first + i)] * w * std::sin(a);
+    }
+    return std::hypot(re, im);
+  };
+  const auto ratio = magnitude(600) / magnitude(1800);
+  std::cout << "Genetic saturation alias 600/1800="
+            << 20 * std::log10(std::max(1e-15, ratio)) << " dB\n";
+  check(ratio < .0056, "Genetic oversampling alias regression");
+}
 } // namespace
 int main(int argc, char **argv) {
   try {
     const std::map<std::string, std::function<void()>> tests{
-        {"genetic-locks", exactLocks},  {"genetic-modes", modes},
-        {"genetic-measures", measures}, {"genetic-100", hundred},
-        {"genetic-identity", identity}, {"genetic-prng", prngTest},
+        {"genetic-spectrum", geneticSpectrum},
+        {"genetic-locks", exactLocks},
+        {"genetic-modes", modes},
+        {"genetic-measures", measures},
+        {"genetic-100", hundred},
+        {"genetic-identity", identity},
+        {"genetic-prng", prngTest},
         {"genetic-layers", layers}};
     if (argc != 2 || !tests.contains(argv[1]))
       throw std::runtime_error("Choose genetic test");

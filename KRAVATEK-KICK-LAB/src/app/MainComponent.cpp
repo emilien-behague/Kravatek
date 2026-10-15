@@ -147,11 +147,21 @@ MainComponent::MainComponent() {
     syncControls(); renderNow(); remember();
     const auto error = devices_.initialise(0, 2, nullptr, true); devices_.addAudioCallback(this);
     if (error.isNotEmpty()) setStatus("Audio : " + error, true); else handleAsyncUpdate();
-    setSize(1380, 940);
+    genetic_=std::make_unique<GeneticLab>();addAndMakeVisible(*genetic_);addAndMakeVisible(modeSwitch_);
+    genetic_->deviceRate=[this]{const auto r=deviceRate_.load();return r>=8000&&r<=192000?r:48000;};
+    genetic_->queueAudio=[this](std::span<const float> samples,bool loop,double bpm){
+        if(!audioActive_.load())return false;
+        const auto period=loop?static_cast<std::size_t>(std::llround(deviceRate_.load()*60/bpm)):0;
+        return playback_.queue(samples,period);
+    };
+    genetic_->stopAudio=[this]{playback_.stop();};genetic_->chooseAudio=[this]{chooseAudio();};
+    genetic_->openLegacy=[this](const juce::File& f){showClassic(true);loadFrom(f);};
+    modeSwitch_.setWantsKeyboardFocus(false);modeSwitch_.onClick=[this]{showClassic(!classicShowing_);};
+    setSize(1440,1100);showClassic(false);
 }
 
 MainComponent::~MainComponent() {
-    stopTimer(); devices_.removeAudioCallback(this); devices_.closeAudioDevice(); cancelPendingUpdate();
+    genetic_.reset(); stopTimer(); devices_.removeAudioCallback(this); devices_.closeAudioDevice(); cancelPendingUpdate();
     chooser_.reset(); setLookAndFeel(nullptr);
 }
 void MainComponent::syncControls() {
@@ -232,6 +242,7 @@ void MainComponent::playKick() {
     setStatus(looping_ ? "PREVIEW / " + juce::String(state_.bpm, 0) + " BPM / SPACE = STOP" : "ONE SHOT");
 }
 bool MainComponent::keyPressed(const juce::KeyPress& key) {
+    if(!classicShowing_&&genetic_)return genetic_->keyPressed(key);
     if (key.getKeyCode() == juce::KeyPress::spaceKey && !seed_.hasKeyboardFocus(true)) {playKick(); return true;}
     return false;
 }
@@ -361,7 +372,7 @@ void MainComponent::handleAsyncUpdate() {
 }
 
 void MainComponent::paint(juce::Graphics& g) {
-    g.fillAll(krui::blue);
+    g.fillAll(krui::blue); if(!classicShowing_)return; krui::grid(g,getLocalBounds());
     krui::frame(g, presetBounds_, "01 / PRESET MEMORY"); krui::frame(g, sideBounds_, "MONITOR / LIBRARY");
     const std::array<const char*, 6> titles {"02 / OSC - PITCH", "03 / AMP", "04 / BODY", "05 / TAIL", "06 / FX", "07 / ATTACK - SUB"};
     for (std::size_t i = 0; i < moduleBounds_.size(); ++i) krui::frame(g, moduleBounds_[i], titles[i]);
@@ -382,6 +393,8 @@ void MainComponent::paint(juce::Graphics& g) {
     }
 }
 void MainComponent::resized() {
+    if(genetic_){genetic_->setBounds(getLocalBounds());modeSwitch_.setBounds(getWidth()-124,22,106,29);modeSwitch_.toFront(false);}
+    if(!classicShowing_)return;
     auto b = getLocalBounds().reduced(16);
     auto header = b.removeFromTop(104);
     brand_.setBounds(header.removeFromLeft(std::min(284, header.getWidth() / 4))); header.removeFromLeft(12);
@@ -421,6 +434,7 @@ void MainComponent::resized() {
 }
 
 void MainComponent::runSmokeTest(const juce::File& directory) {
+    showClassic(true);
     require(directory.createDirectory().wasOk(), "Cannot create smoke directory");
     auto* viewport = findParentComponentOfClass<juce::Viewport>();
     require(viewport != nullptr, "Instrument viewport is missing");
@@ -484,4 +498,19 @@ void MainComponent::runSmokeTest(const juce::File& directory) {
     report->setProperty("audioCallbacks", static_cast<juce::int64>(callbacks_.load()));
     report->setProperty("physicalListeningVerified", false);
     require(directory.getChildFile("gui-smoke.json").replaceWithText(juce::JSON::toString(juce::var(report.get()))), "Report failed");
+}
+
+void MainComponent::showClassic(bool classic) {
+    playback_.stop();looping_=false;play_.setButtonText("PLAY");if(genetic_)genetic_->stop();classicShowing_=classic;
+    for(int i=0;i<getNumChildComponents();++i){auto* c=getChildComponent(i);if(c!=genetic_.get()&&c!=&modeSwitch_)c->setVisible(classic);}
+    if(genetic_)genetic_->setVisible(!classic);modeSwitch_.setVisible(true);modeSwitch_.setButtonText(classic?"GENETIC LAB":"CLASSIC 0.2");resized();repaint();
+}
+void MainComponent::runGeneticSmokeTest(const juce::File& directory,std::function<void(bool,juce::String)> done) {
+    showClassic(false);genetic_->runSmokeTest(directory,[this,directory,done=std::move(done)](bool ok,juce::String error){
+        if(ok){try{auto report=juce::JSON::parse(directory.getChildFile("gui-smoke.json").loadFileAsString());auto* object=report.getDynamicObject();if(!object)throw std::runtime_error("Missing genetic GUI report");object->setProperty("audioDeviceActive",audioActive_.load());object->setProperty("audioCallbacks",static_cast<juce::int64>(callbacks_.load()));object->setProperty("classic002Verified",true);
+            if(!directory.getChildFile("gui-smoke.json").replaceWithText(juce::JSON::toString(report)))throw std::runtime_error("Cannot save complete GUI report");
+            auto image=createComponentSnapshot(getLocalBounds());auto stream=directory.getChildFile("instrument-003.png").createOutputStream();if(!stream||!stream->setPosition(0)||stream->truncate().failed()||!juce::PNGImageFormat().writeImageToStream(image,*stream))throw std::runtime_error("Cannot save genetic screenshot");
+        }catch(const std::exception& e){ok=false;error=e.what();}}
+        done(ok,error);
+    });
 }
