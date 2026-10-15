@@ -1,2 +1,4 @@
 #pragma once
-inline constexpr const char *kravaBundledProfiles=R"KRAVAPROFILES(@KRAVA_PROFILE_DATA@)KRAVAPROFILES";
+inline constexpr unsigned char kravaBundledProfilesBytes[]={
+@KRAVA_PROFILE_BYTES@
+};

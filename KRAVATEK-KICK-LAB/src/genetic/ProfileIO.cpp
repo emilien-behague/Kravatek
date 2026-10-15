@@ -170,6 +170,6 @@ std::vector<GenreProfile> decodeCatalog(std::string_view s) {
   return profiles;
 }
 std::vector<GenreProfile> bundledProfiles() {
-  return decodeCatalog(kravaBundledProfiles);
+  return decodeCatalog(std::string_view(reinterpret_cast<const char *>(kravaBundledProfilesBytes),sizeof(kravaBundledProfilesBytes)));
 }
 } // namespace kravatek::genetic

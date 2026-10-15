@@ -34,7 +34,16 @@ jobs:
       - name: Configure MSVC x64
         run: cmake --preset windows-x64
       - name: Build Release
-        run: cmake --build --preset windows-release
+        run: |
+          cmake --build --preset windows-release 2>&1 | Tee-Object -FilePath build/windows-x64/msvc-build.log
+          $buildExit = $LASTEXITCODE
+          if ($buildExit -ne 0) {
+            Select-String -Path build/windows-x64/msvc-build.log -Pattern 'error [A-Z]+[0-9]+|fatal error|CMake Error' | Select-Object -First 12 | ForEach-Object {
+              $message = $_.Line.Replace('%', '%25').Replace("`r", '%0D').Replace("`n", '%0A')
+              Write-Output "::error::$message"
+            }
+            exit $buildExit
+          }
       - name: DSP, genetic populations, persistence and WAV tests
         run: ctest --preset windows-release --output-junit test-results-004.xml
       - name: Independent PCM24 and exact recall checks
@@ -81,6 +90,7 @@ jobs:
         with:
           name: Windows-test-results
           path: |
+            KRAVATEK-KICK-LAB/build/windows-x64/msvc-build.log
             KRAVATEK-KICK-LAB/build/windows-x64/Testing/
             KRAVATEK-KICK-LAB/test-results-004.xml
             KRAVATEK-KICK-LAB/build/windows-x64/test-output/genetic-100-report.json
