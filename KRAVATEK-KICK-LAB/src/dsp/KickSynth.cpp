@@ -65,7 +65,7 @@ void colourRender(RenderedKick& result) {
     const auto half = filter.size() / 2;
     const auto highCount = result.samples.size() * static_cast<std::size_t>(factor);
     std::vector<float> high(highCount + 2 * half, 0);
-    SineOscillator body(highRate), modulator(highRate), tail(highRate), sub(highRate);
+    SineOscillator body(highRate), modulator(highRate), tail(highRate), tailModulator(highRate), sub(highRate);
     // Topology-preserving state-variable low-pass: damping stays positive at all settings.
     double filterState1 = 0, filterState2 = 0;
     Random random(p.transientSeed);
@@ -98,8 +98,10 @@ void colourRender(RenderedKick& result) {
             * std::sin(twoPi * (3 + p.tailMotion * 13) * t) * (1 - std::exp(-t / .040)));
         const auto tailFrequency = std::min(p.endHz * movingRatio, highRate * .20);
         const auto tailPhase = tail.phaseRadians(); tail.next(tailFrequency);
-        const auto tailSignal = std::sin(tailPhase + p.tailMotion * 3
-            * std::sin(phase * 1.5 + twoPi * 7 * t));
+        // A non-integer ratio needs its own phase accumulator; multiplying the
+        // wrapped body phase would jump at every fundamental cycle.
+        const auto tailModulation = tailModulator.next(frequency * 1.5 + 7);
+        const auto tailSignal = std::sin(tailPhase + p.tailMotion * 3 * tailModulation);
         const auto tailOnset = .5 * (1 - std::cos(std::numbers::pi * std::clamp(t / .012, 0.0, 1.0)));
         const auto releaseProgress = std::clamp((lastTime - t) / p.releaseSeconds, 0.0, 1.0);
         const auto finalRelease = .5 * (1 - std::cos(std::numbers::pi * releaseProgress));

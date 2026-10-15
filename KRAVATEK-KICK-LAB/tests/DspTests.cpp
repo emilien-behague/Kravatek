@@ -357,6 +357,16 @@ void parameterEffects() {
     const auto sub = kravatek::renderKick(isolated).samples;
     isolated.tailLevel = 0; isolated.filterHz = 100; isolated.fmAmount = 0; isolated.driveDb = 0;
     check(sub == kravatek::renderKick(isolated).samples, "Sub layer is affected by body or filter");
+    // Non-integer ratios must use an independent phase accumulator. Multiplying
+    // an already wrapped body phase creates discontinuities on each body cycle.
+    kravatek::KickParameters movingTail;
+    movingTail.startHz = movingTail.endHz = 50; movingTail.durationSeconds = 1;
+    movingTail.tailLevel = 1; movingTail.tailMotion = 1; movingTail.tailRatio = 2; movingTail.tailSeconds = .5;
+    const auto moving = kravatek::renderKick(movingTail); double maximumStep = 0;
+    for (std::size_t i = 2401; i < moving.samples.size() - 100; ++i)
+        maximumStep = std::max(maximumStep, std::abs(static_cast<double>(moving.samples[i] - moving.samples[i - 1])));
+    std::cout << "Moving tail maximum step=" << maximumStep << '\n';
+    check(maximumStep < .04, "Non-integer tail modulation introduces phase discontinuities");
 }
 
 void filterStability() {

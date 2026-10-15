@@ -9,7 +9,7 @@ La voie enrichie fonctionne à 4 fois la fréquence de sortie, ou 8 fois en dess
 1. Pitch paramétrique du body ; modulation combinée de fréquence et phase par un oscillateur à ratio 1,73, avec décroissance indépendante. Partiels impairs 3/5/7.
 2. Transitoire bruité filtré, enveloppe de body avec attaque et extinction cosinus, décroissance à courbure réglable.
 3. Saturation tanh et morphing vers un sine-fold borné.
-4. Tail à oscillateur propre : ratio, extinction, rebond de pitch, interaction de phase avec le body et drive évolutif. Montée cosinus de 12 ms.
+4. Tail à oscillateur propre : ratio, extinction, rebond de pitch, interaction de phase avec un modulateur indépendant à ratio 1,5 du pitch du body et drive évolutif. Le ratio non entier est intégré dans son propre accumulateur afin d’éviter les sauts de phase. Montée cosinus de 12 ms.
 5. Passe-bas résonant à topologie préservée sur body et tail. Damping positif, cutoff borné et sweep exponentiel.
 6. Sub sinusoïdal à la fondamentale cible, mixé **après** le filtre, avec extinction indépendante.
 7. Filtre FIR Blackman centré puis décimation ; tapers de bord, correction DC pondérée et normalisation de crête à −3 dBFS.

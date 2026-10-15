@@ -2,6 +2,7 @@ name: Windows instrument 0.2
 
 on:
   push:
+    branches: [main]
     paths-ignore:
       - '**/*.md'
       - 'KRAVATEK-KICK-LAB/docs/**'

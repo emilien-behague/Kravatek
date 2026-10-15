@@ -11,6 +11,7 @@ La version 001 possède un [rapport historique séparé](VALIDATION-001.md). Ses
 - Effet sur le signal de chacun des 24 paramètres, dans un contexte où sa couche est active ; isolation du sub ; mutation nulle et verrouillage total sans modification du son.
 - EVOLVE préserve les paramètres SUB/ATTACK verrouillés ; GENERATE est reproductible et NOVELTY ouvre les régions expérimentales.
 - Régression d'alias sur une sinusoïde 1800 Hz, drive 30 dB, rendu 48 kHz : composante mesurée à 600 Hz **−69,57 dB par rapport à la fondamentale**. Cette mesure ciblée ne prouve pas l'absence d'aliasing pour tous les réglages.
+- Régression sur une tail à ratio non entier : la modulation utilise un accumulateur de phase indépendant. Le nouveau test échouait avant correction (saut maximal 0,276) ; la limite exigée est 0,04 pour ce signal contrôlé.
 - Analyse crête/RMS calibrée sur une sinusoïde de niveau connu ; spectre Hann 8192 points calibré en dBFS ; cas minuscule et NaN contrôlés.
 - Lecture mono/stéréo, redéclenchement, concurrence, boucle au tempo, silence entre coups et STOP testés.
 - Test réel de l'application sous Xvfb : drive, édition des deux courbes, DNA, EVOLVE, GENERATE, historique, régénération, sauvegarde JSON/rechargement audio exact, rejet d'un preset incomplet, A/B avec RMS de préécoute égalisé à la fréquence réelle du périphérique, export WAV et capture PNG. Accès aux commandes de bas de page vérifié par défilement dans un viewport de 1100 × 708 pixels.
@@ -28,11 +29,11 @@ Tous : mono, 48 kHz, PCM 24 bits, crête −3 dBFS à la précision de quantific
 | Reference | 320 ms | −16,54 dBFS |
 | Warehouse / Hard Techno | 410 ms | −10,73 dBFS |
 | Hard Psy | 190 ms | −11,08 dBFS |
-| Schranz | 460 ms | −9,25 dBFS |
+| Schranz | 460 ms | −9,21 dBFS |
 | Hardcore | 560 ms | −6,33 dBFS |
 | Deep | 720 ms | −18,88 dBFS |
-| Experimental | 850 ms | −14,48 dBFS |
-| Mutant | 930 ms | −15,39 dBFS |
+| Experimental | 850 ms | −14,88 dBFS |
+| Mutant | 930 ms | −15,24 dBFS |
 
 Ces niveaux décrivent des signaux, pas un classement de qualité. La normalisation en crête ne donne pas la même sonie. La comparaison A/B utilise une fenêtre RMS fixe de 400 ms, avec silence ajouté aux sons plus courts et atténuation du plus fort.
 
