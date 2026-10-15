@@ -2,7 +2,13 @@ name: Windows prototype
 
 on:
   push:
+    paths-ignore:
+      - '**/*.md'
+      - 'KRAVATEK-KICK-LAB/docs/**'
   pull_request:
+    paths-ignore:
+      - '**/*.md'
+      - 'KRAVATEK-KICK-LAB/docs/**'
   workflow_dispatch:
 
 permissions:

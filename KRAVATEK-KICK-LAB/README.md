@@ -4,6 +4,10 @@
 
 Premier synthétiseur de kick autonome, en C++20 et JUCE. Le son est calculé depuis une sinusoïde : aucun sample externe. La cible utilisateur est Windows 10/11 x64. Ce prototype n'est pas encore un plugin VST3.
 
+![Interface réelle du prototype : bleu électrique, cyan et rose, cadres rétro, onde synthétisée et réglages fonctionnels.](docs/images/prototype-001-neon.png)
+
+La direction visuelle suit la référence du créateur : [style néon et fenêtres rétro](docs/DESIGN.md).
+
 ## Utiliser le prototype sous Windows
 
 Si vous avez reçu le paquet Windows, décompressez-le et double-cliquez sur **KravatekKickLab.exe**. Aucun fichier de code n'est à modifier.

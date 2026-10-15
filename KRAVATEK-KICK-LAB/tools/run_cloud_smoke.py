@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import select
+import struct
 import subprocess
 
 PROJECT = Path(__file__).resolve().parents[1]
@@ -23,7 +24,7 @@ def main():
         with (output / 'xvfb.log').open('w') as log:
             server = subprocess.Popen([
                 str(TOOLS / 'sysroot/usr/bin/Xvfb'), '-displayfd', str(write_fd),
-                '-screen', '0', '1024x768x24', '-nolisten', 'tcp', '-ac',
+                '-screen', '0', '1440x1024x24', '-nolisten', 'tcp', '-ac',
             ], pass_fds=(write_fd,), stdout=log, stderr=log)
             os.close(write_fd)
             write_fd = -1
@@ -41,8 +42,22 @@ def main():
             (output / 'application.log').write_text(result.stdout + result.stderr)
             result.check_returncode()
             report = json.loads(report_path.read_text())
-            if report.get('result') != 'passed':
+            if report.get('result') != 'passed' or report.get('theme') != 'neon-retro':
                 raise RuntimeError('GUI test did not pass')
+            # A screenshot must be one complete PNG, including on repeated runs.
+            # FileOutputStream otherwise appends to an existing screenshot by default.
+            png = (output / 'prototype-001.png').read_bytes()
+            if not png.startswith(b'\x89PNG\r\n\x1a\n'):
+                raise RuntimeError('Screenshot is not PNG')
+            offset = 8
+            while offset + 12 <= len(png):
+                length = struct.unpack('>I', png[offset:offset + 4])[0]
+                kind = png[offset + 4:offset + 8]
+                offset += length + 12
+                if kind == b'IEND':
+                    break
+            if offset != len(png) or kind != b'IEND':
+                raise RuntimeError('Screenshot contains stale or appended image data')
             if not report.get('audioDeviceActive') or report.get('audioCallbacks', 0) <= 0:
                 raise RuntimeError('Silent audio device did not execute real JUCE audio callbacks')
             print(json.dumps(report, indent=2))

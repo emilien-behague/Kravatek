@@ -28,16 +28,21 @@ private:
     class Window final : public juce::DocumentWindow {
     public:
         Window() : DocumentWindow(juce::String::fromUTF8("KRAVATEK KICK LAB — PROTOTYPE 001"),
-                    juce::Colour(0xff101116), DocumentWindow::allButtons) {
-            setUsingNativeTitleBar(true);
+                    neon::blue, DocumentWindow::allButtons) {
+            setLookAndFeel(&lookAndFeel_);
+            setUsingNativeTitleBar(false);
+            setTitleBarHeight(32);
             setContentOwned(new MainComponent, true);
             setResizable(true, false);
-            setResizeLimits(760, 520, 1400, 1000);
-            centreWithSize(840, 560);
+            setResizeLimits(960, 720, 1600, 1100);
+            centreWithSize(getWidth(), getHeight());
             setVisible(true);
         }
+        ~Window() override { setLookAndFeel(nullptr); }
         MainComponent& content() { return *static_cast<MainComponent*>(getContentComponent()); }
         void closeButtonPressed() override { juce::JUCEApplication::getInstance()->systemRequestedQuit(); }
+    private:
+        neon::LookAndFeel lookAndFeel_;
     };
     std::unique_ptr<Window> window_;
 };

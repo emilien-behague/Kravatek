@@ -2,16 +2,19 @@
 
 #include "dsp/KickSynth.h"
 #include "dsp/Playback.h"
+#include "NeonStyle.h"
 #include <juce_audio_devices/juce_audio_devices.h>
 #include <juce_gui_basics/juce_gui_basics.h>
 
-class WaveformComponent final : public juce::Component {
+class WaveformComponent final : public juce::Component, public juce::SettableTooltipClient {
 public:
     void setKick(const kravatek::RenderedKick& kick);
     void paint(juce::Graphics& graphics) override;
 private:
     std::vector<float> samples_;
     double duration_ = .320;
+    kravatek::KickParameters parameters_;
+    double peakDb_ = -3;
 };
 
 class MainComponent final : public juce::Component,
@@ -34,13 +37,16 @@ private:
     kravatek::RenderedKick kick_;
     std::vector<float> deviceSamples_;
     double renderedDeviceRate_ = 0;
-    juce::LookAndFeel_V4 lookAndFeel_;
-    juce::Label title_, subtitle_, pitchLabel_, decayLabel_, seedLabel_, status_, format_;
+    neon::LookAndFeel lookAndFeel_;
+    neon::Brand brand_;
+    juce::Label tagline_, pitchLabel_, decayLabel_, seedLabel_, status_, format_, tips_;
     juce::TextButton play_ {"PLAY"}, generate_ {"GENERATE"}, export_ {"EXPORT WAV"}, audio_ {"AUDIO"};
+    juce::TextButton restore_ {"RESTORE"};
     juce::Slider pitch_, decay_;
     juce::TextEditor seed_;
     WaveformComponent waveform_;
     std::unique_ptr<juce::FileChooser> chooser_;
+    juce::Rectangle<int> pitchBounds_, decayBounds_, seedBounds_;
 
     void regenerate();
     void syncControls();
