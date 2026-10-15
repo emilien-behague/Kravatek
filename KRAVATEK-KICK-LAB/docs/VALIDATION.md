@@ -21,7 +21,7 @@ Les moteurs DSP, versions de rendu, catalogue et formats de paramètres restent 
 - Les scénarios antérieurs restent exercés : 20 candidats GSE → 8 enfants ; 32 candidats UKE / 8 profils → 8 enfants ; SAVE/OPEN, PCM24/JSON, panneau SYNTH/FX, A/B et petit écran. Historique final : **94 états**.
 - Workflow contrôlé par actionlint 1.7.7 sans erreur. Le script cloud et le job Windows exigent explicitement les résultats de la régression de style.
 
-Rapport conservé : [gui-041.json](reports/gui-041.json). Sorties complètes : `out/cloud-smoke/`. Aucun test d'écoute humaine n'est revendiqué. Les ASan/UBSan de la 0.4.0 sont historiques ; ils n'ont pas été réexécutés pour ce correctif d'interface.
+Rapport conservé : [gui-041.json](reports/gui-041.json). Capture compilée : [instrument-041.png](images/instrument-041.png). Sorties complètes : `out/cloud-smoke/`. Aucun test d'écoute humaine n'est revendiqué. Les ASan/UBSan de la 0.4.0 sont historiques ; ils n'ont pas été réexécutés pour ce correctif d'interface.
 
 ## Windows
 

@@ -942,7 +942,7 @@ void GeneticLab::finishJob(std::vector<Candidate> candidates, Job job,
             0, static_cast<int>(at - session_.visible.begin()) / columns * 92);
       }
     }
-    if (job == Job::style)
+    if (job == Job::style && !visible.empty())
       scope_.setSelectedId(1, juce::dontSendNotification);
     refreshCurrent();
     batchInfo_.setText(

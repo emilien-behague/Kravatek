@@ -2,7 +2,7 @@
 
 Premier ensemble **Universal Kick Engine** : huit profils musicaux, six points de départ d'architecture et un moteur génétique reproductible. Application autonome C++20/JUCE pour Windows x64. L'identité bleu quadrillé/rose/cyan est conservée.
 
-![Capture réelle de la 0.4](docs/images/instrument-004.png)
+![Capture réelle de la 0.4.1](docs/images/instrument-041.png)
 
 ## Ouvrir et écouter
 
