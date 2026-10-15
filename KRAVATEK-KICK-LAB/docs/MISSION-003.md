@@ -36,3 +36,9 @@ Chaque mode possède ses régions de fréquence, durée, harmoniques, FM/PM, dri
 Les mesures comprennent crête/RMS/DC, durée au-dessus de −60 dB de la crête, autocorrélation des basses fréquences avec confiance, centre spectral pondéré par la puissance sur l'ensemble du rendu (FFT Hann avec recouvrement), fractions d'énergie <200/200–2000/>2000 Hz, huit segments temporels et énergie/crête des 15 premières ms. La F0 est une estimation de périodicité dominante entre 25 et 150 Hz : les textures complexes peuvent donner un résultat ambigu.
 
 La distance acoustique combine ces descripteurs ; la similarité ajoute la corrélation des formes d'onde alignées au déclenchement. Ces heuristiques ne modélisent pas toute la perception et ne prouvent ni qualité ni originalité. Les variations de niveau restent mesurables. Les tests utilisent des sinusoïdes de référence, le silence et une population de 100 graines fixes rendue aux deux fréquences cibles.
+
+## Lot C — DNA au niveau des échantillons
+
+EVOLVE copie entièrement les gènes de chaque couche verrouillée, y compris phase, graine, enveloppes et niveaux. Les couches déverrouillées sont interpolées vers une proposition du mode choisi. Le raffinement à faible amplitude conserve les architectures et graines internes ; l'exploration permet leur remplacement progressif. Les parents sont passés par référence constante et jamais modifiés.
+
+Le test SUB+ATTACK compare les vecteurs flottants complets, avec leur longueur native, sur 20 mutations extrêmes à chacune des deux fréquences cibles. Il vérifie aussi BODY+TAIL, tous verrouillés, évolution nulle, provenance et intégrité du parent. Cette garantie concerne les couches isolées avant gain commun du mix. Leur perception peut évoluer lorsque d'autres couches changent, sans modification de leur signal isolé.

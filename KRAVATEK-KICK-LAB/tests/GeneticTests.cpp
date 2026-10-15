@@ -227,13 +227,51 @@ void hundred() {
             << " RMS range=" << minRms << ".." << maxRms
             << " dBFS, elapsed=" << ms << " ms\n";
 }
+
+void exactLocks() {
+  const auto parent = generateGenome(Mode::experimental, 4444, .75),
+             original = parent;
+  for (auto rate : {44100., 48000.}) {
+    const auto before = render(parent, rate);
+    for (std::uint32_t i = 0; i < 20; ++i) {
+      const auto child = evolveGenome(parent, Mode::mutant, 500 + i, 1,
+                                      {true, true, false, false});
+      check(child.sub == parent.sub && child.attack == parent.attack,
+            "Locked layer parameters changed");
+      const auto after = render(child, rate);
+      check(before.layers[0] == after.layers[0], "Locked SUB audio changed");
+      check(before.layers[1] == after.layers[1], "Locked ATTACK audio changed");
+      check(parent == original, "Evolution overwrote its parent");
+    }
+    const auto all =
+        evolveGenome(parent, Mode::mutant, 555, 1, {true, true, true, true});
+    check(render(all, rate).mix == before.mix,
+          "All locked layers changed the mix");
+    const auto held =
+        evolveGenome(parent, Mode::deep, 558, 1, {false, false, true, true});
+    const auto heldAudio = render(held, rate);
+    check(heldAudio.layers[2] == before.layers[2] &&
+              heldAudio.layers[3] == before.layers[3],
+          "BODY/TAIL locks changed their audio");
+    const auto zero = evolveGenome(parent, Mode::mutant, 559, 1, {}, 0);
+    check(render(zero, rate).mix == before.mix, "Zero evolution changes audio");
+  }
+  const auto subtle = evolveGenome(parent, Mode::experimental, 57, .75, {}, .1);
+  check(subtle.body.kind == parent.body.kind &&
+            subtle.body.seed == parent.body.seed,
+        "Refinement changes architecture");
+  check(subtle.parents.size() == 1 && subtle.parents[0] == parent.id &&
+            subtle.generation == parent.generation + 1,
+        "Parent provenance missing");
+}
 } // namespace
 int main(int argc, char **argv) {
   try {
     const std::map<std::string, std::function<void()>> tests{
-        {"genetic-modes", modes},   {"genetic-measures", measures},
-        {"genetic-100", hundred},   {"genetic-identity", identity},
-        {"genetic-prng", prngTest}, {"genetic-layers", layers}};
+        {"genetic-locks", exactLocks},  {"genetic-modes", modes},
+        {"genetic-measures", measures}, {"genetic-100", hundred},
+        {"genetic-identity", identity}, {"genetic-prng", prngTest},
+        {"genetic-layers", layers}};
     if (argc != 2 || !tests.contains(argv[1]))
       throw std::runtime_error("Choose genetic test");
     tests.at(argv[1])();

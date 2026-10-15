@@ -233,3 +233,106 @@ Genome generateGenome(Mode mode, std::uint32_t seed, double n) {
   return g;
 }
 } // namespace kravatek::genetic
+namespace kravatek::genetic {
+Genome evolveGenome(const Genome &parent, Mode mode, std::uint32_t seed,
+                    double novelty, Locks locks, double strength) {
+  validate(parent);
+  if (!std::isfinite(strength) || strength < 0 || strength > 1)
+    throw std::invalid_argument("Evolution strength must be 0..1");
+  auto checked = parent;
+  identify(checked);
+  if (checked.id != parent.id)
+    throw std::invalid_argument("Parent identity does not match its genes");
+  if (parent.generation >= 1000000)
+    throw std::invalid_argument("Generation limit reached");
+  const auto target = generateGenome(mode, seed, novelty);
+  auto child = parent;
+  child.mode = mode;
+  child.seed = seed;
+  child.novelty = novelty;
+  child.locks = locks;
+  child.parents = {parent.id};
+  child.generation = parent.generation + 1;
+  child.name = std::string(modeName(mode)) + " G" +
+               std::to_string(child.generation) + " / " + std::to_string(seed);
+  const auto amount = strength * (.06 + .94 * novelty);
+  const auto mix = [&](double a, double b) { return a + (b - a) * amount; };
+  Random structure(seed ^ 0x45564f31U);
+  const bool structural =
+      strength >= .2 && structure.unit() < novelty * novelty * strength;
+#define MIX(group, field)                                                      \
+  child.group.field = mix(parent.group.field, target.group.field)
+  if (!locks.sub) {
+    MIX(sub, hz);
+    MIX(sub, duration);
+    MIX(sub, decay);
+    MIX(sub, attack);
+    MIX(sub, release);
+    MIX(sub, level);
+    MIX(sub, phase);
+  }
+  if (!locks.attack) {
+    MIX(attack, hz);
+    MIX(attack, duration);
+    MIX(attack, decay);
+    MIX(attack, attack);
+    MIX(attack, release);
+    MIX(attack, level);
+    MIX(attack, colour);
+    MIX(attack, phase);
+    if (structural) {
+      child.attack.kind = target.attack.kind;
+      child.attack.seed = target.attack.seed;
+    }
+  }
+  if (!locks.body) {
+    MIX(body, startHz);
+    MIX(body, pivotHz);
+    MIX(body, endHz);
+    MIX(body, pivotTime);
+    MIX(body, settleTime);
+    MIX(body, curve);
+    MIX(body, duration);
+    MIX(body, attack);
+    MIX(body, release);
+    MIX(body, ampCurve);
+    MIX(body, level);
+    MIX(body, harmonics);
+    MIX(body, fm);
+    MIX(body, fmTime);
+    MIX(body, drive);
+    MIX(body, fold);
+    MIX(body, cutoff);
+    MIX(body, resonance);
+    MIX(body, sweep);
+    MIX(body, phase);
+    if (structural) {
+      child.body.kind = target.body.kind;
+      child.body.seed = target.body.seed;
+    }
+  }
+  if (!locks.tail) {
+    MIX(tail, hz);
+    MIX(tail, endHz);
+    MIX(tail, duration);
+    MIX(tail, decay);
+    MIX(tail, attack);
+    MIX(tail, release);
+    MIX(tail, level);
+    MIX(tail, motion);
+    MIX(tail, speed);
+    MIX(tail, cutoff);
+    MIX(tail, resonance);
+    MIX(tail, sweep);
+    MIX(tail, drive);
+    MIX(tail, phase);
+    if (structural) {
+      child.tail.kind = target.tail.kind;
+      child.tail.seed = target.tail.seed;
+    }
+  }
+#undef MIX
+  identify(child);
+  return child;
+}
+} // namespace kravatek::genetic
