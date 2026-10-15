@@ -234,8 +234,12 @@ Genome generateGenome(Mode mode, std::uint32_t seed, double n) {
 }
 } // namespace kravatek::genetic
 namespace kravatek::genetic {
-Genome evolveGenome(const Genome &parent, Mode mode, std::uint32_t seed,
-                    double novelty, Locks locks, double strength) {
+Genome evolveToward(const Genome &parent, const Genome &target, Locks locks,
+                    double strength) {
+  validate(target);
+  const auto mode = target.mode;
+  const auto seed = target.seed;
+  const auto novelty = target.novelty;
   validate(parent);
   if (!std::isfinite(strength) || strength < 0 || strength > 1)
     throw std::invalid_argument("Evolution strength must be 0..1");
@@ -245,8 +249,15 @@ Genome evolveGenome(const Genome &parent, Mode mode, std::uint32_t seed,
     throw std::invalid_argument("Parent identity does not match its genes");
   if (parent.generation >= 1000000)
     throw std::invalid_argument("Generation limit reached");
-  const auto target = generateGenome(mode, seed, novelty);
   auto child = parent;
+  if (target.engine == universalVersion) {
+    child.engine = universalVersion;
+    child.architecture = target.architecture;
+    child.character = target.character;
+    child.profileId = target.profileId;
+    child.profileRevision = target.profileRevision;
+    child.profileDigest = target.profileDigest;
+  }
   child.mode = mode;
   child.seed = seed;
   child.novelty = novelty;
@@ -331,8 +342,63 @@ Genome evolveGenome(const Genome &parent, Mode mode, std::uint32_t seed,
       child.tail.seed = target.tail.seed;
     }
   }
+  if (child.engine == universalVersion && amount > 0) {
+    if (!locks.sub) {
+      child.sub.renderVersion =
+          std::max(parent.sub.renderVersion, target.sub.renderVersion);
+      MIX(sub, endHz);
+      MIX(sub, glideTime);
+    }
+    if (!locks.attack)
+      child.attack.renderVersion =
+          std::max(parent.attack.renderVersion, target.attack.renderVersion);
+    if (!locks.body) {
+      child.body.renderVersion =
+          std::max(parent.body.renderVersion, target.body.renderVersion);
+      MIX(body, damping);
+      MIX(body, inharmonicity);
+      MIX(body, noise);
+    }
+    if (!locks.tail) {
+      child.tail.renderVersion =
+          std::max(parent.tail.renderVersion, target.tail.renderVersion);
+      MIX(tail, glideTime);
+      MIX(tail, harmonics);
+      MIX(tail, gate);
+    }
+#define FX(group)                                                              \
+  MIX(group, fx.stageDrive);                                                   \
+  MIX(group, fx.preCut);                                                       \
+  MIX(group, fx.postCut);                                                      \
+  MIX(group, fx.bias);                                                         \
+  MIX(group, fx.multiband);                                                    \
+  MIX(group, fx.crossover);                                                    \
+  MIX(group, fx.lowDrive);                                                     \
+  MIX(group, fx.highDrive);                                                    \
+  MIX(group, fx.driveDecay);                                                   \
+  MIX(group, fx.driveMotion);                                                  \
+  MIX(group, fx.bits);                                                         \
+  MIX(group, fx.holdHz);                                                       \
+  if (structural || parent.group.renderVersion != target.group.renderVersion)  \
+    child.group.fx.kind = target.group.fx.kind;
+    if (!locks.body) {
+      FX(body)
+    }
+    if (!locks.tail) {
+      FX(tail)
+    }
+#undef FX
+  }
 #undef MIX
   identify(child);
   return child;
+}
+} // namespace kravatek::genetic
+
+namespace kravatek::genetic {
+Genome evolveGenome(const Genome &parent, Mode mode, std::uint32_t seed,
+                    double novelty, Locks locks, double strength) {
+  return evolveToward(parent, generateGenome(mode, seed, novelty), locks,
+                      strength);
 }
 } // namespace kravatek::genetic

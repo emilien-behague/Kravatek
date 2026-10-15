@@ -150,6 +150,16 @@ void measures() {
           "High band calibration");
     check(featureDistance(f, high) > .2,
           "Feature metric cannot distinguish low/high tones");
+    std::vector<float> edge(tone.size());
+    for (std::size_t i = 0; i < edge.size(); ++i)
+      edge[i] = static_cast<float>(
+          .1 * std::sin(2 * std::numbers::pi * 50 * i / rate) +
+          (i < static_cast<std::size_t>(rate * .02)
+               ? .5 * std::sin(2 * std::numbers::pi * 4000 * i / rate)
+               : 0));
+    const auto padded = measure(edge, rate, true);
+    check(padded.bandEnergy[2] > .25 && padded.bandEnergy[2] < .4,
+          "Boundary analysis loses transient energy");
     std::fill(tone.begin(), tone.end(), 0);
     auto silent = measure(tone, rate);
     check(silent.fundamentalHz == 0 && silent.basic.rmsDb == -120 &&

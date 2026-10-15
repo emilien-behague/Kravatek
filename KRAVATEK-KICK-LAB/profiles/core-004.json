@@ -1,0 +1,1437 @@
+{
+  "schema": "KRAVA_PROFILES_004",
+  "profiles": [
+    {
+      "schema": "KRAVA_PROFILE_004",
+      "id": "house.classic",
+      "name": "Classic House",
+      "family": "HOUSE",
+      "revision": 1,
+      "parents": [],
+      "bpmLow": "110",
+      "bpmHigh": "130",
+      "fundamentalLow": "42",
+      "fundamentalHigh": "58",
+      "subGlide": "0",
+      "tailInterval": "0",
+      "architectures": [
+        "0.84999999999999998",
+        "0.10000000000000001",
+        "0",
+        "0",
+        "0.050000000000000003",
+        "0"
+      ],
+      "bodyWeights": [
+        "0.80000000000000004",
+        "0.20000000000000001",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "tailWeights": [
+        "0.84999999999999998",
+        "0.14999999999999999",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "attackWeights": [
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "distortions": [
+        "0.75",
+        "0",
+        "0.25",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "ranges": [
+        {
+          "parameter": "attack.decay",
+          "low": "0.001",
+          "high": "0.0060000000000000001",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "attack.level",
+          "low": "0.080000000000000002",
+          "high": "0.25",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.ampCurve",
+          "low": "0.90000000000000002",
+          "high": "1.3",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.drive",
+          "low": "0",
+          "high": "4",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.duration",
+          "low": "0.22",
+          "high": "0.40000000000000002",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.harmonics",
+          "low": "0",
+          "high": "0.12",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.level",
+          "low": "0.59999999999999998",
+          "high": "0.84999999999999998",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.pivotHz",
+          "low": "65",
+          "high": "110",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.pivotTime",
+          "low": "0.0040000000000000001",
+          "high": "0.012",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.settleTime",
+          "low": "0.029999999999999999",
+          "high": "0.065000000000000002",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.startHz",
+          "low": "130",
+          "high": "260",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "sub.decay",
+          "low": "0.059999999999999998",
+          "high": "0.14000000000000001",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "sub.duration",
+          "low": "0.20000000000000001",
+          "high": "0.40000000000000002",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "sub.level",
+          "low": "0.55000000000000004",
+          "high": "0.80000000000000004",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.decay",
+          "low": "0.050000000000000003",
+          "high": "0.12",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.duration",
+          "low": "0.14999999999999999",
+          "high": "0.29999999999999999",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.level",
+          "low": "0.040000000000000001",
+          "high": "0.14999999999999999",
+          "distribution": "triangular"
+        }
+      ]
+    },
+    {
+      "schema": "KRAVA_PROFILE_004",
+      "id": "techno.classic",
+      "name": "Classic Techno",
+      "family": "TECHNO",
+      "revision": 1,
+      "parents": [],
+      "bpmLow": "125",
+      "bpmHigh": "145",
+      "fundamentalLow": "45",
+      "fundamentalHigh": "65",
+      "subGlide": "0",
+      "tailInterval": "0",
+      "architectures": [
+        "0.69999999999999996",
+        "0.10000000000000001",
+        "0.20000000000000001",
+        "0",
+        "0",
+        "0"
+      ],
+      "bodyWeights": [
+        "0.14999999999999999",
+        "0.69999999999999996",
+        "0.14999999999999999",
+        "0",
+        "0",
+        "0"
+      ],
+      "tailWeights": [
+        "0.10000000000000001",
+        "0.14999999999999999",
+        "0.10000000000000001",
+        "0",
+        "0.65000000000000002",
+        "0"
+      ],
+      "attackWeights": [
+        "0",
+        "0",
+        "1",
+        "0"
+      ],
+      "distortions": [
+        "0.14999999999999999",
+        "0",
+        "0.69999999999999996",
+        "0.14999999999999999",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "ranges": [
+        {
+          "parameter": "attack.decay",
+          "low": "0.001",
+          "high": "0.0060000000000000001",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "attack.level",
+          "low": "0.17999999999999999",
+          "high": "0.40000000000000002",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.drive",
+          "low": "6",
+          "high": "13",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.duration",
+          "low": "0.22",
+          "high": "0.40000000000000002",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.fx.driveMotion",
+          "low": "0.10000000000000001",
+          "high": "0.40000000000000002",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.harmonics",
+          "low": "0.25",
+          "high": "0.55000000000000004",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.level",
+          "low": "0.59999999999999998",
+          "high": "0.84999999999999998",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.pivotHz",
+          "low": "65",
+          "high": "110",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.pivotTime",
+          "low": "0.0040000000000000001",
+          "high": "0.012",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.settleTime",
+          "low": "0.029999999999999999",
+          "high": "0.065000000000000002",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.startHz",
+          "low": "240",
+          "high": "650",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "sub.decay",
+          "low": "0.059999999999999998",
+          "high": "0.14000000000000001",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "sub.duration",
+          "low": "0.20000000000000001",
+          "high": "0.40000000000000002",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "sub.level",
+          "low": "0.34999999999999998",
+          "high": "0.65000000000000002",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.decay",
+          "low": "0.050000000000000003",
+          "high": "0.12",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.duration",
+          "low": "0.22",
+          "high": "0.41999999999999998",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.level",
+          "low": "0.20000000000000001",
+          "high": "0.40000000000000002",
+          "distribution": "triangular"
+        }
+      ]
+    },
+    {
+      "schema": "KRAVA_PROFILE_004",
+      "id": "psytrance.full-on",
+      "name": "Full-On Psytrance",
+      "family": "PSYTRANCE",
+      "revision": 1,
+      "parents": [],
+      "bpmLow": "138",
+      "bpmHigh": "155",
+      "fundamentalLow": "46",
+      "fundamentalHigh": "64",
+      "subGlide": "0",
+      "tailInterval": "0",
+      "architectures": [
+        "0.050000000000000003",
+        "0.94999999999999996",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "bodyWeights": [
+        "0.10000000000000001",
+        "0.84999999999999998",
+        "0.050000000000000003",
+        "0",
+        "0",
+        "0"
+      ],
+      "tailWeights": [
+        "0.90000000000000002",
+        "0.10000000000000001",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "attackWeights": [
+        "0",
+        "0",
+        "0",
+        "1"
+      ],
+      "distortions": [
+        "0.10000000000000001",
+        "0",
+        "0.90000000000000002",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "ranges": [
+        {
+          "parameter": "attack.decay",
+          "low": "0.00080000000000000004",
+          "high": "0.0030000000000000001",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "attack.level",
+          "low": "0.12",
+          "high": "0.34999999999999998",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.drive",
+          "low": "1",
+          "high": "8",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.duration",
+          "low": "0.12",
+          "high": "0.20000000000000001",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.harmonics",
+          "low": "0.12",
+          "high": "0.34999999999999998",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.level",
+          "low": "0.59999999999999998",
+          "high": "0.84999999999999998",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.pivotHz",
+          "low": "85",
+          "high": "160",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.pivotTime",
+          "low": "0.002",
+          "high": "0.0050000000000000001",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.settleTime",
+          "low": "0.014999999999999999",
+          "high": "0.028000000000000001",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.startHz",
+          "low": "700",
+          "high": "1400",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "sub.decay",
+          "low": "0.029999999999999999",
+          "high": "0.065000000000000002",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "sub.duration",
+          "low": "0.105",
+          "high": "0.17999999999999999",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "sub.level",
+          "low": "0.34999999999999998",
+          "high": "0.65000000000000002",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.decay",
+          "low": "0.025000000000000001",
+          "high": "0.055",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.duration",
+          "low": "0.080000000000000002",
+          "high": "0.14000000000000001",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.level",
+          "low": "0.040000000000000001",
+          "high": "0.14000000000000001",
+          "distribution": "triangular"
+        }
+      ]
+    },
+    {
+      "schema": "KRAVA_PROFILE_004",
+      "id": "hard-techno.driven",
+      "name": "Driven Hard Techno",
+      "family": "HARD TECHNO",
+      "revision": 1,
+      "parents": [],
+      "bpmLow": "140",
+      "bpmHigh": "165",
+      "fundamentalLow": "42",
+      "fundamentalHigh": "62",
+      "subGlide": "0",
+      "tailInterval": "0",
+      "architectures": [
+        "0",
+        "0",
+        "0.84999999999999998",
+        "0.14999999999999999",
+        "0",
+        "0"
+      ],
+      "bodyWeights": [
+        "0",
+        "0.59999999999999998",
+        "0.20000000000000001",
+        "0",
+        "0",
+        "0.20000000000000001"
+      ],
+      "tailWeights": [
+        "0.10000000000000001",
+        "0.10000000000000001",
+        "0.65000000000000002",
+        "0.14999999999999999",
+        "0",
+        "0"
+      ],
+      "attackWeights": [
+        "0",
+        "0",
+        "0",
+        "1"
+      ],
+      "distortions": [
+        "0",
+        "0.14999999999999999",
+        "0.14999999999999999",
+        "0",
+        "0.14999999999999999",
+        "0.55000000000000004",
+        "0",
+        "0"
+      ],
+      "ranges": [
+        {
+          "parameter": "attack.decay",
+          "low": "0.001",
+          "high": "0.0060000000000000001",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "attack.level",
+          "low": "0.29999999999999999",
+          "high": "0.59999999999999998",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.drive",
+          "low": "16",
+          "high": "25",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.duration",
+          "low": "0.22",
+          "high": "0.40000000000000002",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.fx.driveMotion",
+          "low": "0.20000000000000001",
+          "high": "0.69999999999999996",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.fx.highDrive",
+          "low": "10",
+          "high": "23",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.fx.multiband",
+          "low": "0.29999999999999999",
+          "high": "0.69999999999999996",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.fx.postCut",
+          "low": "4500",
+          "high": "12000",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.fx.preCut",
+          "low": "2500",
+          "high": "8000",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.fx.stageDrive",
+          "low": "3",
+          "high": "10",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.harmonics",
+          "low": "0.45000000000000001",
+          "high": "0.80000000000000004",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.level",
+          "low": "0.59999999999999998",
+          "high": "0.84999999999999998",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.pivotHz",
+          "low": "65",
+          "high": "110",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.pivotTime",
+          "low": "0.0040000000000000001",
+          "high": "0.012",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.settleTime",
+          "low": "0.029999999999999999",
+          "high": "0.065000000000000002",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.startHz",
+          "low": "350",
+          "high": "1000",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "sub.decay",
+          "low": "0.059999999999999998",
+          "high": "0.14000000000000001",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "sub.duration",
+          "low": "0.20000000000000001",
+          "high": "0.40000000000000002",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "sub.level",
+          "low": "0.34999999999999998",
+          "high": "0.65000000000000002",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.decay",
+          "low": "0.050000000000000003",
+          "high": "0.12",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.drive",
+          "low": "10",
+          "high": "21",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.duration",
+          "low": "0.25",
+          "high": "0.5",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.level",
+          "low": "0.29999999999999999",
+          "high": "0.59999999999999998",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.resonance",
+          "low": "0.34999999999999998",
+          "high": "0.69999999999999996",
+          "distribution": "triangular"
+        }
+      ]
+    },
+    {
+      "schema": "KRAVA_PROFILE_004",
+      "id": "hardstyle.tonal",
+      "name": "Tonal Hardstyle",
+      "family": "HARDSTYLE",
+      "revision": 1,
+      "parents": [],
+      "bpmLow": "145",
+      "bpmHigh": "160",
+      "fundamentalLow": "43",
+      "fundamentalHigh": "66",
+      "subGlide": "0",
+      "tailInterval": "0",
+      "architectures": [
+        "0",
+        "0",
+        "0.14999999999999999",
+        "0.84999999999999998",
+        "0",
+        "0"
+      ],
+      "bodyWeights": [
+        "0",
+        "0.20000000000000001",
+        "0",
+        "0",
+        "0",
+        "0.80000000000000004"
+      ],
+      "tailWeights": [
+        "0.20000000000000001",
+        "0",
+        "0",
+        "0.10000000000000001",
+        "0.65000000000000002",
+        "0.050000000000000003"
+      ],
+      "attackWeights": [
+        "0",
+        "0",
+        "1",
+        "0"
+      ],
+      "distortions": [
+        "0",
+        "0.10000000000000001",
+        "0.10000000000000001",
+        "0",
+        "0.65000000000000002",
+        "0.14999999999999999",
+        "0",
+        "0"
+      ],
+      "ranges": [
+        {
+          "parameter": "attack.decay",
+          "low": "0.001",
+          "high": "0.0060000000000000001",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "attack.level",
+          "low": "0.20000000000000001",
+          "high": "0.5",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.drive",
+          "low": "12",
+          "high": "23",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.duration",
+          "low": "0.14999999999999999",
+          "high": "0.28000000000000003",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.harmonics",
+          "low": "0.59999999999999998",
+          "high": "0.94999999999999996",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.level",
+          "low": "0.59999999999999998",
+          "high": "0.84999999999999998",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.pivotHz",
+          "low": "65",
+          "high": "110",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.pivotTime",
+          "low": "0.0040000000000000001",
+          "high": "0.012",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.settleTime",
+          "low": "0.029999999999999999",
+          "high": "0.065000000000000002",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.startHz",
+          "low": "400",
+          "high": "1100",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "sub.decay",
+          "low": "0.059999999999999998",
+          "high": "0.14000000000000001",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "sub.duration",
+          "low": "0.17999999999999999",
+          "high": "0.40000000000000002",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "sub.level",
+          "low": "0.20000000000000001",
+          "high": "0.45000000000000001",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.decay",
+          "low": "0.29999999999999999",
+          "high": "0.65000000000000002",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.drive",
+          "low": "14",
+          "high": "26",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.duration",
+          "low": "0.5",
+          "high": "1.1000000000000001",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.gate",
+          "low": "0.29999999999999999",
+          "high": "0.69999999999999996",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.harmonics",
+          "low": "0.5",
+          "high": "0.90000000000000002",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.level",
+          "low": "0.65000000000000002",
+          "high": "0.94999999999999996",
+          "distribution": "triangular"
+        }
+      ]
+    },
+    {
+      "schema": "KRAVA_PROFILE_004",
+      "id": "hardcore.driven",
+      "name": "Driven Hardcore",
+      "family": "HARDCORE",
+      "revision": 1,
+      "parents": [],
+      "bpmLow": "160",
+      "bpmHigh": "200",
+      "fundamentalLow": "38",
+      "fundamentalHigh": "62",
+      "subGlide": "0",
+      "tailInterval": "0",
+      "architectures": [
+        "0",
+        "0",
+        "0.80000000000000004",
+        "0.20000000000000001",
+        "0",
+        "0"
+      ],
+      "bodyWeights": [
+        "0",
+        "0.14999999999999999",
+        "0.050000000000000003",
+        "0",
+        "0",
+        "0.80000000000000004"
+      ],
+      "tailWeights": [
+        "0.10000000000000001",
+        "0",
+        "0",
+        "0.14999999999999999",
+        "0.75",
+        "0"
+      ],
+      "attackWeights": [
+        "0",
+        "0",
+        "0",
+        "1"
+      ],
+      "distortions": [
+        "0",
+        "0.59999999999999998",
+        "0",
+        "0",
+        "0.20000000000000001",
+        "0.20000000000000001",
+        "0",
+        "0"
+      ],
+      "ranges": [
+        {
+          "parameter": "attack.decay",
+          "low": "0.001",
+          "high": "0.0060000000000000001",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "attack.level",
+          "low": "0.40000000000000002",
+          "high": "0.69999999999999996",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.drive",
+          "low": "22",
+          "high": "30",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.duration",
+          "low": "0.20000000000000001",
+          "high": "0.38",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.fx.driveMotion",
+          "low": "0.5",
+          "high": "1",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.fx.highDrive",
+          "low": "20",
+          "high": "30",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.fx.lowDrive",
+          "low": "0",
+          "high": "5",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.fx.multiband",
+          "low": "0.65000000000000002",
+          "high": "1",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.fx.stageDrive",
+          "low": "10",
+          "high": "20",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.harmonics",
+          "low": "0.75",
+          "high": "1",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.level",
+          "low": "0.59999999999999998",
+          "high": "0.84999999999999998",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.pivotHz",
+          "low": "130",
+          "high": "400",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.pivotTime",
+          "low": "0.0040000000000000001",
+          "high": "0.012",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.settleTime",
+          "low": "0.029999999999999999",
+          "high": "0.065000000000000002",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.startHz",
+          "low": "550",
+          "high": "1600",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "sub.decay",
+          "low": "0.059999999999999998",
+          "high": "0.14000000000000001",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "sub.duration",
+          "low": "0.20000000000000001",
+          "high": "0.40000000000000002",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "sub.level",
+          "low": "0.20000000000000001",
+          "high": "0.5",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.decay",
+          "low": "0.050000000000000003",
+          "high": "0.12",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.drive",
+          "low": "22",
+          "high": "30",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.duration",
+          "low": "0.25",
+          "high": "0.59999999999999998",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.fx.stageDrive",
+          "low": "5",
+          "high": "15",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.gate",
+          "low": "0.14999999999999999",
+          "high": "0.5",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.harmonics",
+          "low": "0.69999999999999996",
+          "high": "1",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.level",
+          "low": "0.59999999999999998",
+          "high": "0.90000000000000002",
+          "distribution": "triangular"
+        }
+      ]
+    },
+    {
+      "schema": "KRAVA_PROFILE_004",
+      "id": "808.long",
+      "name": "Long Tuned 808",
+      "family": "808 / HIP-HOP",
+      "revision": 1,
+      "parents": [],
+      "bpmLow": "65",
+      "bpmHigh": "160",
+      "fundamentalLow": "30",
+      "fundamentalHigh": "55",
+      "subGlide": "2",
+      "tailInterval": "0",
+      "architectures": [
+        "0.050000000000000003",
+        "0",
+        "0",
+        "0.94999999999999996",
+        "0",
+        "0"
+      ],
+      "bodyWeights": [
+        "0.90000000000000002",
+        "0.10000000000000001",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "tailWeights": [
+        "1",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "attackWeights": [
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "distortions": [
+        "0.14999999999999999",
+        "0",
+        "0.84999999999999998",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "ranges": [
+        {
+          "parameter": "attack.decay",
+          "low": "0.001",
+          "high": "0.0060000000000000001",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "attack.level",
+          "low": "0.040000000000000001",
+          "high": "0.17999999999999999",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.drive",
+          "low": "0",
+          "high": "5",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.duration",
+          "low": "0.14999999999999999",
+          "high": "0.40000000000000002",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.harmonics",
+          "low": "0",
+          "high": "0.14999999999999999",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.level",
+          "low": "0.12",
+          "high": "0.29999999999999999",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.pivotHz",
+          "low": "65",
+          "high": "110",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.pivotTime",
+          "low": "0.0040000000000000001",
+          "high": "0.012",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.settleTime",
+          "low": "0.029999999999999999",
+          "high": "0.065000000000000002",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.startHz",
+          "low": "100",
+          "high": "220",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "sub.decay",
+          "low": "0.5",
+          "high": "1.8",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "sub.duration",
+          "low": "1.5",
+          "high": "3.5",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "sub.glideTime",
+          "low": "0.029999999999999999",
+          "high": "0.16",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "sub.level",
+          "low": "0.75",
+          "high": "1",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.decay",
+          "low": "0.59999999999999998",
+          "high": "1.6000000000000001",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.drive",
+          "low": "0",
+          "high": "4",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.duration",
+          "low": "1.3999999999999999",
+          "high": "3.2000000000000002",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.harmonics",
+          "low": "0",
+          "high": "0.20000000000000001",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.level",
+          "low": "0.12",
+          "high": "0.29999999999999999",
+          "distribution": "triangular"
+        }
+      ]
+    },
+    {
+      "schema": "KRAVA_PROFILE_004",
+      "id": "experimental.hybrid",
+      "name": "Hybrid Experimental",
+      "family": "EXPERIMENTAL",
+      "revision": 1,
+      "parents": [],
+      "bpmLow": "90",
+      "bpmHigh": "200",
+      "fundamentalLow": "32",
+      "fundamentalHigh": "85",
+      "subGlide": "0",
+      "tailInterval": "0",
+      "architectures": [
+        "0",
+        "0",
+        "0.14999999999999999",
+        "0.10000000000000001",
+        "0.14999999999999999",
+        "0.59999999999999998"
+      ],
+      "bodyWeights": [
+        "0",
+        "0",
+        "0.29999999999999999",
+        "0.40000000000000002",
+        "0.20000000000000001",
+        "0.10000000000000001"
+      ],
+      "tailWeights": [
+        "0",
+        "0.29999999999999999",
+        "0",
+        "0.5",
+        "0",
+        "0.20000000000000001"
+      ],
+      "attackWeights": [
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "distortions": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0.20000000000000001",
+        "0.20000000000000001",
+        "0",
+        "0.59999999999999998"
+      ],
+      "ranges": [
+        {
+          "parameter": "attack.decay",
+          "low": "0.001",
+          "high": "0.0060000000000000001",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "attack.level",
+          "low": "0.080000000000000002",
+          "high": "0.25",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.drive",
+          "low": "0",
+          "high": "7",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.duration",
+          "low": "0.29999999999999999",
+          "high": "1.2",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.fm",
+          "low": "1",
+          "high": "4",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.fmTime",
+          "low": "0.050000000000000003",
+          "high": "0.34999999999999998",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.fx.bits",
+          "low": "5",
+          "high": "12",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.fx.driveMotion",
+          "low": "0.20000000000000001",
+          "high": "0.90000000000000002",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.fx.holdHz",
+          "low": "1500",
+          "high": "18000",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.harmonics",
+          "low": "0.29999999999999999",
+          "high": "0.90000000000000002",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.level",
+          "low": "0.59999999999999998",
+          "high": "0.84999999999999998",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.pivotHz",
+          "low": "40",
+          "high": "1500",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.pivotTime",
+          "low": "0.0040000000000000001",
+          "high": "0.012",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.resonance",
+          "low": "0.29999999999999999",
+          "high": "0.90000000000000002",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.settleTime",
+          "low": "0.029999999999999999",
+          "high": "0.065000000000000002",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.startHz",
+          "low": "90",
+          "high": "1800",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "body.sweep",
+          "low": "-3",
+          "high": "3",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "sub.decay",
+          "low": "0.059999999999999998",
+          "high": "0.14000000000000001",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "sub.duration",
+          "low": "0.20000000000000001",
+          "high": "0.40000000000000002",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "sub.level",
+          "low": "0.34999999999999998",
+          "high": "0.65000000000000002",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.decay",
+          "low": "0.050000000000000003",
+          "high": "0.12",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.drive",
+          "low": "8",
+          "high": "25",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.duration",
+          "low": "0.40000000000000002",
+          "high": "1.5",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.harmonics",
+          "low": "0.29999999999999999",
+          "high": "0.90000000000000002",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.level",
+          "low": "0.40000000000000002",
+          "high": "0.80000000000000004",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.motion",
+          "low": "0.5",
+          "high": "1",
+          "distribution": "triangular"
+        },
+        {
+          "parameter": "tail.speed",
+          "low": "3",
+          "high": "32",
+          "distribution": "triangular"
+        }
+      ]
+    }
+  ]
+}

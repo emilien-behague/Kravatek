@@ -2,6 +2,7 @@
 #include "Features.h"
 #include "Generator.h"
 #include "LayerRenderer.h"
+#include "Profile.h"
 #include <functional>
 #include <optional>
 #include <stop_token>
@@ -14,6 +15,7 @@ struct BatchRequest {
   bool refine = false;
   Locks locks;
   std::optional<Genome> parent;
+  std::optional<UniversalRequest> universal;
 };
 struct Candidate {
   Genome genome;

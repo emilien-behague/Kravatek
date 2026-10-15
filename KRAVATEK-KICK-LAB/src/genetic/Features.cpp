@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cmath>
 #include <complex>
+#include <cstdint>
 #include <numbers>
 #include <vector>
 namespace kravatek::genetic {
@@ -31,7 +32,8 @@ void fft(std::vector<std::complex<double>> &f) {
   }
 }
 } // namespace
-Features measure(std::span<const float> samples, double rate) {
+Features measure(std::span<const float> samples, double rate,
+                 bool completeEdges) {
   Features result;
   result.basic = analyse(samples, rate);
   const auto count = samples.size();
@@ -65,17 +67,32 @@ Features measure(std::span<const float> samples, double rate) {
   constexpr std::size_t n = 8192, hop = 4096;
   double spectralEnergy = 0, weighted = 0;
   std::vector<std::complex<double>> spectrum(n);
-  for (std::size_t start = 0; start < count; start += hop) {
+  // UKE: centered square-root periodic Hann, 50% overlap and zero padding.
+  // Sum of squared windows is one, including the transient at time zero.
+  // Legacy analysis remains unchanged for deterministic GSE retry decisions.
+  const auto first = completeEdges ? -static_cast<std::int64_t>(hop) : 0;
+  for (auto start = first; start < static_cast<std::int64_t>(count);
+       start += static_cast<std::int64_t>(hop)) {
     std::fill(spectrum.begin(), spectrum.end(), 0);
-    for (std::size_t i = 0; i < n && start + i < count; ++i)
-      spectrum[i] =
-          samples[start + i] *
-          (.5 - .5 * std::cos(2 * std::numbers::pi * static_cast<double>(i) /
-                              static_cast<double>(n - 1)));
+    for (std::size_t i = 0; i < n; ++i) {
+      const auto j = start + static_cast<std::int64_t>(i);
+      if (j < 0 || j >= static_cast<std::int64_t>(count))
+        continue;
+      const auto w =
+          completeEdges
+              ? std::sqrt(.5 - .5 * std::cos(2 * std::numbers::pi *
+                                             static_cast<double>(i) / n))
+              : (.5 -
+                 .5 * std::cos(2 * std::numbers::pi * static_cast<double>(i) /
+                               static_cast<double>(n - 1)));
+      spectrum[i] = samples[static_cast<std::size_t>(j)] * w;
+    }
     fft(spectrum);
-    for (std::size_t i = 1; i < n / 2; ++i) {
+    for (std::size_t i = completeEdges ? 0 : 1;
+         i < (completeEdges ? n / 2 + 1 : n / 2); ++i) {
       const auto hz = static_cast<double>(i) * rate / n,
-                 power = std::norm(spectrum[i]);
+                 power = std::norm(spectrum[i]) *
+                         (completeEdges && (i == 0 || i == n / 2) ? .5 : 1.);
       spectralEnergy += power;
       weighted += hz * power;
       result.bandEnergy[hz < 200 ? 0 : hz < 2000 ? 1 : 2] += power;

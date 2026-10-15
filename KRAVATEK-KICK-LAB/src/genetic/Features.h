@@ -12,7 +12,8 @@ struct Features {
       timeEnergy{}; // Fractions of total energy over equal-duration bins.
   double transientFraction = 0, transientPeakDb = -120, attackSeconds = 0;
 };
-Features measure(std::span<const float>, double rate);
+Features measure(std::span<const float>, double rate,
+                 bool completeEdges = false);
 double featureDistance(const Features &, const Features &) noexcept;
 double similarity(std::span<const float>, const Features &,
                   std::span<const float>, const Features &) noexcept;

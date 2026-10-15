@@ -1,0 +1,2 @@
+#pragma once
+inline constexpr const char *kravaBundledProfiles=R"KRAVAPROFILES(@KRAVA_PROFILE_DATA@)KRAVAPROFILES";

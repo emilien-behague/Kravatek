@@ -1,4 +1,5 @@
 #include "SessionIO.h"
+#include "ProfileIO.h"
 #include <charconv>
 #include <cmath>
 #include <iomanip>
@@ -82,23 +83,28 @@ Locks locksFrom(const var &v) {
   X(pivotHz)                                                                   \
   X(endHz)                                                                     \
   X(pivotTime)                                                                 \
-  X(settleTime) X(curve) X(duration) X(attack) X(release) X(ampCurve) X(level) \
-      X(harmonics) X(fm) X(fmTime) X(drive) X(fold) X(cutoff) X(resonance)     \
-          X(sweep) X(phase)
+  X(settleTime)                                                                \
+  X(curve)                                                                     \
+  X(duration) X(attack) X(release) X(ampCurve) X(level) X(harmonics) X(fm)     \
+      X(fmTime) X(drive) X(fold) X(cutoff) X(resonance) X(sweep) X(phase)
 #define TAIL_FIELDS(X)                                                         \
   X(hz)                                                                        \
   X(endHz)                                                                     \
   X(duration)                                                                  \
   X(decay)                                                                     \
-  X(attack) X(release) X(level) X(motion) X(speed) X(cutoff) X(resonance)      \
-      X(sweep) X(drive) X(phase)
+  X(attack)                                                                    \
+  X(release)                                                                   \
+  X(level) X(motion) X(speed) X(cutoff) X(resonance) X(sweep) X(drive)         \
+      X(phase)
 var fxVar(const FxGenes &f) {
   auto v = object();
   v->setProperty("kind", static_cast<int>(f.kind));
 #define PUT(fld) v->setProperty(#fld, decimal(f.fld));
   PUT(stageDrive)
-  PUT(preCut) PUT(postCut) PUT(bias) PUT(multiband) PUT(crossover) PUT(lowDrive)
-      PUT(highDrive) PUT(driveDecay) PUT(driveMotion) PUT(bits) PUT(holdHz)
+  PUT(preCut)
+  PUT(postCut)
+  PUT(bias) PUT(multiband) PUT(crossover) PUT(lowDrive) PUT(highDrive)
+      PUT(driveDecay) PUT(driveMotion) PUT(bits) PUT(holdHz)
 #undef PUT
           return var(v.get());
 }
@@ -110,8 +116,10 @@ FxGenes fxFrom(const var &v) {
   f.kind = static_cast<DistortionKind>(k);
 #define GET(fld) f.fld = real(v, #fld);
   GET(stageDrive)
-  GET(preCut) GET(postCut) GET(bias) GET(multiband) GET(crossover) GET(lowDrive)
-      GET(highDrive) GET(driveDecay) GET(driveMotion) GET(bits) GET(holdHz)
+  GET(preCut)
+  GET(postCut)
+  GET(bias) GET(multiband) GET(crossover) GET(lowDrive) GET(highDrive)
+      GET(driveDecay) GET(driveMotion) GET(bits) GET(holdHz)
 #undef GET
           return f;
 }
@@ -267,7 +275,7 @@ Genome genomeFrom(const var &root) {
 std::string encodeSession(const Session &s) {
   validateSession(s);
   auto root = object();
-  const bool universal =
+  const bool universal = s.settings.universal.has_value() ||
       std::any_of(s.library.entries().begin(), s.library.entries().end(),
                   [](const Genome &g) { return g.engine == universalVersion; });
   root->setProperty("schema",
@@ -292,6 +300,16 @@ std::string encodeSession(const Session &s) {
   settings->setProperty("count", s.settings.count);
   settings->setProperty("refine", s.settings.refine);
   settings->setProperty("locks", locksVar(s.settings.locks));
+  if (s.settings.universal) {
+    const auto &r = *s.settings.universal;
+    auto u = object();
+    u->setProperty("profile",
+                   juce::String::fromUTF8(encodeProfile(r.profile).c_str()));
+    u->setProperty("architecture", static_cast<int>(r.overrideArchitecture));
+    u->setProperty("character", static_cast<int>(r.character));
+    u->setProperty("note", r.note);
+    settings->setProperty("universal", var(u.get()));
+  }
   root->setProperty("settings", var(settings.get()));
   root->setProperty("bpm", decimal(s.bpm));
   root->setProperty("loop", s.loop);
@@ -342,6 +360,19 @@ Session decodeSession(std::string_view json) {
   s.settings.count = index(settings, "count");
   s.settings.refine = flag(settings, "refine");
   s.settings.locks = locksFrom(settings["locks"]);
+  if (settings.hasProperty("universal")) {
+    const auto u = settings["universal"];
+    UniversalRequest r;
+    r.profile = decodeProfile(text(u, "profile"));
+    auto a = integer(u, "architecture"), c = integer(u, "character");
+    if (a > static_cast<unsigned>(Architecture::count) ||
+        c >= static_cast<unsigned>(Character::count))
+      throw std::invalid_argument("Invalid universal request enum");
+    r.overrideArchitecture = static_cast<Architecture>(a);
+    r.character = static_cast<Character>(c);
+    r.note = static_cast<int>(integer(u, "note"));
+    s.settings.universal = r;
+  }
   s.bpm = real(root, "bpm");
   s.loop = flag(root, "loop");
   s.matchLevel = flag(root, "matchLevel");

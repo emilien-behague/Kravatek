@@ -1,5 +1,7 @@
 #include "dsp/WavWriter.h"
+#include "genetic/ProfileIO.h"
 #include "genetic/SessionIO.h"
+#include <algorithm>
 #include <cmath>
 #include <filesystem>
 #include <fstream>
@@ -18,17 +20,29 @@ int main(int argc, char **argv) {
     std::map<std::string, std::string> args;
     for (int i = 1; i < argc; ++i) {
       std::string key = argv[i];
+      if (key == "--list-profiles") {
+        args.emplace(key, "");
+        continue;
+      }
       if (key == "--help") {
-        std::cout << "krava-genome-render [--mode "
-                     "deep|hard-psy|schranz|experimental|mutant] [--seed "
-                     "UINT32] [--novelty 0..1] [--sample-rate 44100|48000] "
-                     "[--batch 1|4|8|12|20] [--input SESSION.json] [--index N] "
-                     "--output FILE.wav\n";
+        std::cout
+            << "krava-genome-render [--profile ID] [--profiles CATALOG.json] "
+               "[--list-profiles] [--architecture "
+               "auto|analog|psy-punch|distorted-hard|tonal|acoustic|"
+               "experimental] [--character "
+               "profile|deep|punchy|warm|clean|distorted|metallic|organic|"
+               "bouncy|tonal|raw|experimental] [--note 24..60] [--mode "
+               "deep|hard-psy|schranz|experimental|mutant] [--seed "
+               "UINT32] [--novelty 0..1] [--sample-rate 44100|48000] "
+               "[--batch 1|4|8|12|20] [--input SESSION.json] [--index N] "
+               "--output FILE.wav\n";
         return 0;
       }
       if (key != "--mode" && key != "--seed" && key != "--novelty" &&
           key != "--sample-rate" && key != "--batch" && key != "--input" &&
-          key != "--index" && key != "--output")
+          key != "--index" && key != "--output" && key != "--profile" &&
+          key != "--profiles" && key != "--architecture" &&
+          key != "--character" && key != "--note")
         throw std::invalid_argument("Unknown option: " + key);
       if (i + 1 >= argc || !args.emplace(key, argv[++i]).second)
         throw std::invalid_argument("Missing or repeated option");
@@ -42,6 +56,27 @@ int main(int argc, char **argv) {
         throw std::invalid_argument("Invalid numeric option");
       return v;
     };
+    auto catalog = bundledProfiles();
+    if (args.contains("--profiles")) {
+      const auto path = utf8Path(args.at("--profiles"));
+      if (std::filesystem::file_size(path) > 1024 * 1024)
+        throw std::invalid_argument("Catalog too large");
+      std::ifstream in(path, std::ios::binary);
+      if (!in)
+        throw std::runtime_error("Cannot read catalog");
+      catalog =
+          decodeCatalog(std::string((std::istreambuf_iterator<char>(in)), {}));
+    }
+    if (args.contains("--list-profiles")) {
+      for (const auto &p : catalog)
+        std::cout << p.id << " / " << p.family << " / " << p.name << '\n';
+      return 0;
+    }
+    if (!args.contains("--profile") &&
+        (args.contains("--architecture") || args.contains("--character") ||
+         args.contains("--note")))
+      throw std::invalid_argument(
+          "Architecture/character/note require --profile");
     Session session;
     if (args.contains("--input")) {
       const auto path = utf8Path(args.at("--input"));
@@ -71,6 +106,46 @@ int main(int argc, char **argv) {
       session.settings.mode = args.contains("--mode")
                                   ? modes.at(args.at("--mode"))
                                   : Mode::experimental;
+      if (args.contains("--profile")) {
+        if (args.contains("--mode"))
+          throw std::invalid_argument("Choose profile or legacy mode");
+        UniversalRequest request;
+        bool found = false;
+        for (const auto &p : catalog)
+          if (p.id == args.at("--profile")) {
+            request.profile = p;
+            found = true;
+          }
+        if (!found)
+          throw std::invalid_argument("Unknown genre profile");
+        if (args.contains("--architecture")) {
+          const std::map<std::string, Architecture> kinds{
+              {"auto", Architecture::count},
+              {"analog", Architecture::analog},
+              {"psy-punch", Architecture::psyPunch},
+              {"distorted-hard", Architecture::distortedHard},
+              {"tonal", Architecture::tonal},
+              {"acoustic", Architecture::acoustic},
+              {"experimental", Architecture::experimental}};
+          request.overrideArchitecture = kinds.at(args.at("--architecture"));
+        }
+        if (args.contains("--character")) {
+          const std::vector<std::string> names{
+              "profile", "deep",      "punchy",   "warm",
+              "clean",   "distorted", "metallic", "organic",
+              "bouncy",  "tonal",     "raw",      "experimental"};
+          const auto at =
+              std::find(names.begin(), names.end(), args.at("--character"));
+          if (at == names.end())
+            throw std::invalid_argument("Unknown sound character");
+          request.character = static_cast<Character>(at - names.begin());
+        }
+        const auto note = numeric("--note", 0);
+        if (note != std::floor(note) || (note != 0 && (note < 24 || note > 60)))
+          throw std::invalid_argument("Invalid tuning note");
+        request.note = static_cast<int>(note);
+        session.settings.universal = request;
+      }
       const auto seed = numeric("--seed", 1), count = numeric("--batch", 1);
       if (seed < 0 || seed > 4294967295.0 || seed != std::floor(seed) ||
           count != std::floor(count) || count < 1 || count > 20)
@@ -81,8 +156,12 @@ int main(int argc, char **argv) {
       session.settings.sampleRate = numeric("--sample-rate", 48000);
       if (count == 1) {
         session.selected = static_cast<int>(session.library.append(
-            generateGenome(session.settings.mode, session.settings.seed,
-                           session.settings.novelty)));
+            session.settings.universal
+                ? generateUniversal(*session.settings.universal,
+                                    session.settings.seed,
+                                    session.settings.novelty)
+                : generateGenome(session.settings.mode, session.settings.seed,
+                                 session.settings.novelty)));
         session.visible = {session.selected};
       } else
         for (const auto &c : population(session.settings)) {

@@ -12,7 +12,10 @@ std::vector<Candidate> population(const BatchRequest &request,
   if (request.sampleRate != 44100 && request.sampleRate != 48000)
     throw std::invalid_argument("Population rate must be 44100 or 48000");
   // Validate even a cancelled/empty request before reporting completion.
-  generateGenome(request.mode, request.seed, request.novelty);
+  if (request.universal)
+    generateUniversal(*request.universal, request.seed, request.novelty);
+  else
+    generateGenome(request.mode, request.seed, request.novelty);
   if (request.parent)
     validate(*request.parent, request.sampleRate);
   std::vector<Candidate> result;
@@ -28,13 +31,23 @@ std::vector<Candidate> population(const BatchRequest &request,
          ++attempt) {
       const auto seed = seeds.next();
       Candidate candidate;
-      candidate.genome =
-          request.parent ? evolveGenome(*request.parent, request.mode, seed,
-                                        request.novelty, request.locks,
-                                        request.refine ? .1 : 1)
-                         : generateGenome(request.mode, seed, request.novelty);
+      if (request.universal)
+        candidate.genome =
+            request.parent
+                ? evolveUniversal(*request.parent, *request.universal, seed,
+                                  request.novelty, request.locks,
+                                  request.refine ? .1 : 1)
+                : generateUniversal(*request.universal, seed, request.novelty);
+      else
+        candidate.genome =
+            request.parent
+                ? evolveGenome(*request.parent, request.mode, seed,
+                               request.novelty, request.locks,
+                               request.refine ? .1 : 1)
+                : generateGenome(request.mode, seed, request.novelty);
       candidate.audio = render(candidate.genome, request.sampleRate, false);
-      candidate.features = measure(candidate.audio.mix, request.sampleRate);
+      candidate.features = measure(candidate.audio.mix, request.sampleRate,
+                                   request.universal.has_value());
       for (const auto &previous : result)
         candidate.nearestSimilarity =
             std::max(candidate.nearestSimilarity,
@@ -86,6 +99,19 @@ void validateSession(const Session &session) {
   if (!std::isfinite(session.bpm) || session.bpm < 80 || session.bpm > 220)
     throw std::invalid_argument("Invalid tempo");
   const auto &r = session.settings;
+  if (r.universal) {
+    validateProfile(r.universal->profile);
+    auto p = r.universal->profile;
+    identifyProfile(p);
+    if (p.digest != r.universal->profile.digest ||
+        r.universal->character < Character::neutral ||
+        r.universal->character >= Character::count ||
+        r.universal->overrideArchitecture < Architecture::analog ||
+        r.universal->overrideArchitecture > Architecture::count ||
+        (r.universal->note != 0 &&
+         (r.universal->note < 24 || r.universal->note > 60)))
+      throw std::invalid_argument("Invalid universal settings");
+  }
   if (r.mode < Mode::deep || r.mode >= Mode::count ||
       !std::isfinite(r.novelty) || r.novelty < 0 || r.novelty > 1 ||
       (r.sampleRate != 44100 && r.sampleRate != 48000) ||
