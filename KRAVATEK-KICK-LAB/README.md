@@ -1,4 +1,4 @@
-# KRAVA-KICK LAB — 0.4
+# KRAVA-KICK LAB — 0.4.1
 
 Premier ensemble **Universal Kick Engine** : huit profils musicaux, six points de départ d'architecture et un moteur génétique reproductible. Application autonome C++20/JUCE pour Windows x64. L'identité bleu quadrillé/rose/cyan est conservée.
 
@@ -29,13 +29,15 @@ Les probabilités de modules et les plages varient selon le profil ; le genre gu
 
 ## Générer, transformer et conserver
 
-Choisis GENRE / PROFILE, éventuellement CHARACTER / NEXT ARCHITECTURE / NEXT NOTE, puis NOVELTY et COUNT. GENERATE rend 4/8/12/20 candidats en arrière-plan ; CANCEL agit entre candidats. REGENERATE utilise une nouvelle graine déterministe. Sélectionne un parent et active les quatre verrous avant EVOLVE. Les couches verrouillées conservent exactement leurs gènes et leurs buffers isolés, même en provenance de la 0.3.
+Choisir GENRE / PROFILE, CHARACTER, ARCHITECTURE ou NOTE rend et écoute immédiatement **un candidat** ; le mode GENETIC 0.3 fait de même. La 0.4.1 corrige le navigateur auparavant limité aux prochaines générations et le lecteur qui pouvait conserver l'ancien buffer. Le précédent son reste dans HISTORY. Changer de famille rétablit CHARACTER / ARCHITECTURE / NOTE sur PROFILE / AUTO. Les DNA LOCK sont respectés par cet aperçu.
+
+Règle NOVELTY et COUNT, puis GENERATE pour 4/8/12/20 nouveaux candidats en arrière-plan ; CANCEL agit entre candidats. GENERATE reste libre des verrous ; EVOLVE les applique au parent sélectionné. La lecture en boucle suit la nouvelle sélection, y compris par simple clic sur une carte. REGENERATE utilise une nouvelle graine déterministe. Sélectionne un parent et active les quatre verrous avant EVOLVE. Les couches verrouillées conservent exactement leurs gènes et leurs buffers isolés, même en provenance de la 0.3.
 
 PITCH/AMP et les six modules éditent le son sélectionné. SYNTH/FX expose les chaînes BODY/TAIL et les contrôles de glide/phase/membrane. KEEP EDIT ajoute un enfant ; les parents restent dans HISTORY. SAVE conserve la bibliothèque (512 états maximum), la filiation et la définition du profil courant. WAV+JSON conserve aussi le contexte de génération avec le son exporté.
 
 A/B compare deux choix de la bibliothèque ; MATCH RMS atténue le plus fort sur 400 ms, sans changer les originaux. Ce n'est pas une mesure LUFS. Le moteur utilise un gain fixe puis une atténuation de sécurité uniquement au-delà de −1 dBFS, sans amplifier tous les candidats à une même crête. LISTEN permet les solos ; l'export contient toujours le mix.
 
-Les longues tails sont autorisées jusqu'à quatre secondes. TAIL > BEAT avertit d'un dépassement : LOOP tronque avec fondu au prochain temps, ONE-SHOT joue la totalité. NEXT NOTE utilise une notation MIDI, sans MIDI entrant. L'export mono PCM24 accepte 44,1/48 kHz. La préécoute utilise la fréquence réelle du périphérique.
+Les longues tails sont autorisées jusqu'à quatre secondes. TAIL > BEAT avertit d'un dépassement : LOOP tronque avec fondu au prochain temps, ONE-SHOT joue la totalité. NOTE utilise une notation MIDI, sans MIDI entrant. L'export mono PCM24 accepte 44,1/48 kHz. La préécoute utilise la fréquence réelle du périphérique.
 
 Les cinq modes GENETIC 0.3 et CLASSIC 0.2 restent disponibles ; les anciens fichiers ne sont pas reconvertis de force. Les versions sont conservées dans Git sous `v0.3.0`, `archive/pre-mission-004` et les tags antérieurs.
 

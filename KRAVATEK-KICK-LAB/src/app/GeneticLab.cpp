@@ -53,10 +53,14 @@ GeneticLab::GeneticLab() {
   genreLabel_.setText("GENRE", juce::dontSendNotification);
   subgenreLabel_.setText("SUBGENRE / PROFILE", juce::dontSendNotification);
   characterLabel_.setText("CHARACTER", juce::dontSendNotification);
-  architectureLabel_.setText("NEXT ARCHITECTURE", juce::dontSendNotification);
-  noteLabel_.setText("NEXT NOTE", juce::dontSendNotification);
-  for (auto *box : {&genre_, &subgenre_, &character_, &architecture_, &note_})
+  architectureLabel_.setText("ARCHITECTURE", juce::dontSendNotification);
+  noteLabel_.setText("NOTE", juce::dontSendNotification);
+  for (auto *box : {&genre_, &subgenre_, &character_, &architecture_, &note_}) {
     comboStyle(*box);
+    box->setTooltip("Sélection = rendu et écoute d'un candidat. DNA LOCK "
+                    "conserve les couches verrouillées ; l'historique garde "
+                    "les sons précédents. GENERATE produit le lot COUNT.");
+  }
   for (int i = 0; i < static_cast<int>(Character::count); ++i)
     character_.addItem(characterName(static_cast<Character>(i)), i + 1);
   architecture_.addItem("PROFILE / AUTO", 1);
@@ -72,34 +76,34 @@ GeneticLab::GeneticLab() {
                   n + 2);
   genre_.onChange = [this] { chooseGenre(); };
   subgenre_.onChange = [this] {
-    if (subgenre_.getSelectedId() > 0 && session_.settings.universal) {
+    if (!busy_ && subgenre_.getSelectedId() > 0 &&
+        session_.settings.universal) {
       session_.settings.universal->profile = browserProfiles_.at(
           static_cast<std::size_t>(subgenre_.getSelectedId() - 1));
-      dirty_ = true;
-      syncBrowser();
+      previewStyle();
     }
   };
   character_.onChange = [this] {
-    if (session_.settings.universal) {
+    if (!busy_ && session_.settings.universal) {
       session_.settings.universal->character =
           static_cast<Character>(character_.getSelectedId() - 1);
-      dirty_ = true;
+      previewStyle();
     }
   };
   architecture_.onChange = [this] {
-    if (session_.settings.universal) {
+    if (!busy_ && session_.settings.universal) {
       session_.settings.universal->overrideArchitecture =
           architecture_.getSelectedId() == 1
               ? Architecture::count
               : static_cast<Architecture>(architecture_.getSelectedId() - 2);
-      dirty_ = true;
+      previewStyle();
     }
   };
   note_.onChange = [this] {
-    if (session_.settings.universal) {
+    if (!busy_ && session_.settings.universal) {
       session_.settings.universal->note =
           note_.getSelectedId() == 1 ? 0 : note_.getSelectedId() - 2;
-      dirty_ = true;
+      previewStyle();
     }
   };
   details_.onClick = [this] { openDetails(); };
@@ -182,8 +186,9 @@ GeneticLab::GeneticLab() {
     locks_[i].setColour(juce::ToggleButton::textColourId, krui::ink);
     locks_[i].setColour(juce::ToggleButton::tickColourId, krui::cyan);
     locks_[i].setTooltip(juce::String::fromUTF8(
-        "EVOLVE conserve les paramètres et le signal isolé de cette couche. "
-        "L'édition manuelle reste possible."));
+        "EVOLVE et l'aperçu de style conservent les paramètres et le signal "
+        "isolé de cette couche. GENERATE et l'édition manuelle restent "
+        "libres."));
     locks_[i].onClick = [this] {
       session_.settings.locks = {
           locks_[0].getToggleState(), locks_[1].getToggleState(),
@@ -267,9 +272,10 @@ GeneticLab::GeneticLab() {
             "Décroissance indépendante du SUB.");
   configure(subLength, "LENGTH", 40, 1500, 1, " ms", "Durée propre du SUB.");
   mode_.onChange = [this] {
-    if (mode_.getSelectedId() > 0) {
+    if (!busy_ && mode_.getSelectedId() > 0) {
       session_.settings.mode = static_cast<Mode>(mode_.getSelectedId() - 1);
-      dirty_ = true;
+      if (!session_.settings.universal)
+        previewStyle();
     }
   };
   count_.onChange = [this] {
@@ -356,6 +362,7 @@ GeneticLab::GeneticLab() {
   regenerate_.onClick = [this] { startBatch(false, true); };
   evolve_.onClick = [this] { startBatch(true); };
   cancel_.onClick = [this] {
+    previewAuditionPending_ = false;
     worker_.request_stop();
     status("Annulation demandée ; les candidats déjà calculés sont conservés.");
   };
@@ -416,8 +423,8 @@ GeneticLab::GeneticLab() {
   refreshCurrent();
   rebuildCards();
   setBusy(false);
-  status(catalogWarning_.isEmpty() ? "STYLE BROWSER / choisis GENRE, PROFILE, "
-                                     "NOVELTY et COUNT, puis GENERATE."
+  status(catalogWarning_.isEmpty() ? "STYLE BROWSER / choisir un style le rend "
+                                     "et l'écoute. GENERATE = lot COUNT."
                                    : catalogWarning_,
          catalogWarning_.isNotEmpty());
   setWantsKeyboardFocus(true);
@@ -574,7 +581,7 @@ void GeneticLab::select(int index, bool play) {
   sync();
   refreshCurrent();
   cards_.repaint();
-  if (play)
+  if (play || playing_)
     audition();
 }
 void GeneticLab::modify(std::function<void(Genome &)> fn) {
@@ -796,13 +803,18 @@ void GeneticLab::setBusy(bool value) {
   if (!value)
     sync();
 }
-void GeneticLab::startBatch(bool evolving, bool regenerate) {
+void GeneticLab::startBatch(bool evolving, bool regenerate, bool stylePreview) {
   if (busy_)
     return;
   try {
-    commitEdit();
     readSettings();
+    commitEdit();
     auto request = session_.settings;
+    if (stylePreview) {
+      request.count = 1;
+      const auto &locks = request.locks;
+      evolving = locks.sub || locks.attack || locks.body || locks.tail;
+    }
     if (regenerate) {
       Random next(request.seed);
       request.seed = next.next();
@@ -818,13 +830,18 @@ void GeneticLab::startBatch(bool evolving, bool regenerate) {
         Library::maximum)
       throw std::invalid_argument(
           "Bibliothèque pleine : SAVE, puis ouvre une nouvelle session.");
+    previewAuditionPending_ = stylePreview;
     setBusy(true);
     progress_.store(0);
     total_.store(request.count);
     startTimer(50);
-    status(evolving ? "EVOLVE / rendu en arrière-plan ; parent conservé."
-                    : "GENERATE / rendu en arrière-plan.");
-    const auto job = evolving ? Job::evolve : Job::create;
+    status(stylePreview ? "STYLE / rendu d'un aperçu ; historique et DNA "
+                          "LOCK conservés."
+           : evolving   ? "EVOLVE / rendu en arrière-plan ; parent conservé."
+                        : "GENERATE / rendu en arrière-plan.");
+    const auto job = stylePreview ? Job::style
+                     : evolving   ? Job::evolve
+                                  : Job::create;
     const juce::Component::SafePointer<GeneticLab> safe(this);
     worker_ = std::jthread([this, safe, request, job](std::stop_token token) {
       std::vector<Candidate> result;
@@ -842,6 +859,7 @@ void GeneticLab::startBatch(bool evolving, bool regenerate) {
           });
     });
   } catch (const std::exception &e) {
+    previewAuditionPending_ = false;
     status(e.what(), true);
     if (smokeStage_)
       smokeDone(false, e.what());
@@ -924,6 +942,8 @@ void GeneticLab::finishJob(std::vector<Candidate> candidates, Job job,
             0, static_cast<int>(at - session_.visible.begin()) / columns * 92);
       }
     }
+    if (job == Job::style)
+      scope_.setSelectedId(1, juce::dontSendNotification);
     refreshCurrent();
     batchInfo_.setText(
         juce::String(static_cast<int>(visible.size())) + " candidats / " +
@@ -936,9 +956,26 @@ void GeneticLab::finishJob(std::vector<Candidate> candidates, Job job,
                  "déverrouille une couche pour explorer davantage."
                : "Double-clic sur une carte pour écouter. SAVE conserve la "
                  "session et ses parents.");
+    const bool shouldAudition = previewAuditionPending_ || playing_;
+    previewAuditionPending_ = false;
+    if (!visible.empty() && job != Job::refresh && shouldAudition) {
+      const auto previousAuditions = acceptedAuditions_;
+      audition();
+      if (job == Job::style && acceptedAuditions_ > previousAuditions) {
+        const auto &l = session_.settings.locks;
+        status(l.sub && l.attack && l.body && l.tail
+                   ? "STYLE / 4 DNA LOCK : son conservé. Déverrouille une "
+                     "couche pour changer le timbre."
+                   : "STYLE / " +
+                         (session_.settings.universal ? subgenre_.getText()
+                                                      : mode_.getText()) +
+                         " / aperçu MIX ; ancien son dans HISTORY.");
+      }
+    }
     if (smokeStage_)
       smokeAdvance();
   } catch (const std::exception &e) {
+    previewAuditionPending_ = false;
     setBusy(false);
     stopTimer();
     status(e.what(), true);
@@ -992,6 +1029,8 @@ void GeneticLab::audition(int index, bool comparing) {
     listeningComparison_ = comparing;
     const bool accepted =
         queueAudio && queueAudio(samples, session_.loop, session_.bpm);
+    if (accepted)
+      ++acceptedAuditions_;
     playing_ = accepted && session_.loop;
     play_.setButtonText(playing_ ? "STOP" : "PLAY");
     if (!accepted)
@@ -1019,6 +1058,7 @@ void GeneticLab::togglePlay() {
     audition();
 }
 void GeneticLab::stop() {
+  previewAuditionPending_ = false;
   if (stopAudio)
     stopAudio();
   playing_ = false;
@@ -1395,9 +1435,11 @@ void GeneticLab::runSmokeTest(
   smokeDirectory_ = directory;
   smokeCompletion_ = std::move(completion);
   smokeStage_ = 1;
-  genre_.setSelectedId(1, juce::sendNotificationSync);
-  mode_.setSelectedId(static_cast<int>(Mode::experimental) + 1,
-                      juce::sendNotificationSync);
+  // Configure the batch without auditioning intermediate browser choices.
+  // Real dropdown actions are exercised separately by smokeStyleChange().
+  session_.settings.universal.reset();
+  session_.settings.mode = Mode::experimental;
+  sync();
   novelty_.setValue(75, juce::sendNotificationSync);
   count_.setSelectedId(20, juce::sendNotificationSync);
   seed_.setText("778899", false);
@@ -1616,8 +1658,13 @@ void GeneticLab::smokeAdvance() {
                             .toStdString());
       require(render(side.library.at(0)).mix == render(current()).mix,
               "Universal GUI export metadata changed audio");
-      smokeStage_ = 7;
-      history_.onClick();
+      smokeStyleStep_ = 0;
+      smokeStage_ = 8;
+      smokeStyleChange();
+      return;
+    }
+    if (smokeStage_ == 8) {
+      smokeStyleCheck();
       return;
     }
     if (smokeStage_ == 7) {
@@ -1638,9 +1685,19 @@ void GeneticLab::smokeAdvance() {
       report->setProperty("result", "passed");
       report->setProperty("theme", "krava-universal-004");
       report->setProperty("product", "KRAVA-KICK LAB");
+      report->setProperty(
+          "applicationVersion",
+          juce::JUCEApplication::getInstance()->getApplicationVersion());
       report->setProperty("engine", universalVersion);
       report->setProperty("universalProfiles", smokeProfile_);
       report->setProperty("universalCandidates", smokeProfile_ * 4);
+      report->setProperty("styleDropdownActions", 18);
+      report->setProperty("styleSelectionAuditions", 17);
+      report->setProperty("styleSelectionChangesAudio", true);
+      report->setProperty("styleOverridesReset", true);
+      report->setProperty("stylePreviewPreservesLocksAndHistory", true);
+      report->setProperty("stylePreviewRespectsStopAndOneShot", true);
+      report->setProperty("playingBufferFollowsSelectionAndGeneration", true);
       report->setProperty("long808AndTuning", true);
       report->setProperty("universalEvolvedChildren", 8);
       report->setProperty("universalLockedLayersExact", true);
@@ -1736,6 +1793,8 @@ void GeneticLab::syncBrowser() {
   note_.setSelectedId(r.note == 0 ? 1 : r.note + 2, juce::dontSendNotification);
 }
 void GeneticLab::chooseGenre() {
+  if (busy_)
+    return;
   const auto at = genre_.getSelectedId() - 1;
   if (at < 0 || at >= static_cast<int>(families_.size()))
     return;
@@ -1744,14 +1803,17 @@ void GeneticLab::chooseGenre() {
   else
     for (const auto &p : profiles_)
       if (p.family == families_[static_cast<std::size_t>(at)]) {
-        auto request = session_.settings.universal.value_or(UniversalRequest{});
-        request.profile = p;
-        session_.settings.universal = request;
+        // A new family starts from its own recipe. Old forced architecture,
+        // character or tuning must not silently override the chosen style.
+        session_.settings.universal = UniversalRequest{p};
         break;
       }
+  previewStyle();
+}
+void GeneticLab::previewStyle() {
   dirty_ = true;
   syncBrowser();
-  updateOverlap();
+  startBatch(false, false, true);
 }
 juce::CallOutBox &GeneticLab::openDetails() {
   const juce::Component::SafePointer<GeneticLab> safe(this);
@@ -1801,14 +1863,178 @@ void GeneticLab::smokeUniversal() {
   const auto &p = profiles_.at(static_cast<std::size_t>(smokeProfile_));
   const auto family = std::find(families_.begin(), families_.end(), p.family);
   require(family != families_.end(), "Profile family missing from browser");
-  genre_.setSelectedId(static_cast<int>(family - families_.begin() + 1),
-                       juce::sendNotificationSync);
-  character_.setSelectedId(1, juce::sendNotificationSync);
-  architecture_.setSelectedId(1, juce::sendNotificationSync);
-  note_.setSelectedId(smokeProfile_ == 6 ? 35 : 1,
-                      juce::sendNotificationSync); // 33 + 2
+  session_.settings.universal = UniversalRequest{p};
+  session_.settings.universal->note = smokeProfile_ == 6 ? 33 : 0;
+  syncBrowser();
   novelty_.setValue(75, juce::sendNotificationSync);
   count_.setSelectedId(4, juce::sendNotificationSync);
   seed_.setText(juce::String(44000 + smokeProfile_), false);
   generate_.onClick();
+}
+
+void GeneticLab::smokeStyleChange() {
+  session_.settings.locks = {};
+  session_.loop = smokeStyleStep_ != 15;
+  if (smokeStyleStep_ == 0) {
+    // Simulate previously forced settings and a layer/A-B audition. A new
+    // family must start from its own defaults and audition the full mix.
+    session_.settings.universal->character = Character::warm;
+    session_.settings.universal->overrideArchitecture = Architecture::tonal;
+    session_.settings.universal->note = 48;
+    activeA_ = true;
+    audition(session_.compareA, true);
+  }
+  if (smokeStyleStep_ == 11) {
+    // A session can contain an older snapshot beside the installed profile.
+    // Choosing the installed entry must render it, just like a family change.
+    session_.settings.universal = UniversalRequest{profiles_.front()};
+    session_.settings.universal->profile.digest = "older-profile-snapshot";
+  }
+  if (smokeStyleStep_ == 12)
+    session_.settings.locks = {true, true, false, false};
+  if (smokeStyleStep_ == 13)
+    session_.settings.locks = {true, true, true, true};
+  sync();
+  count_.setSelectedId(20, juce::sendNotificationSync);
+  // Keep the same seed across the eight families: the style itself, rather
+  // than a different random draw, must change the rendered and queued audio.
+  seed_.setText(juce::String(78000 + std::max(0, smokeStyleStep_ - 7)), false);
+  smokeParent_ = current();
+  smokeParentIndex_ = session_.selected;
+  smokeStyleLibrarySize_ = session_.library.entries().size();
+  smokeStyleAuditions_ = acceptedAuditions_;
+  const auto rate = deviceRate ? deviceRate() : 48000;
+  smokeStyleAudio_ = render(current(), rate, true).mix;
+  if (smokeStyleStep_ == 0)
+    scope_.setSelectedId(2, juce::dontSendNotification);
+  auto chooseFamily = [this](std::size_t profile) {
+    const auto family = std::find(families_.begin(), families_.end(),
+                                  profiles_.at(profile).family);
+    require(family != families_.end(), "Style test family missing");
+    genre_.setSelectedId(static_cast<int>(family - families_.begin() + 1),
+                         juce::sendNotificationSync);
+  };
+  if (smokeStyleStep_ < 8)
+    chooseFamily(static_cast<std::size_t>(smokeStyleStep_));
+  else {
+    switch (smokeStyleStep_) {
+    case 8:
+      character_.setSelectedId(static_cast<int>(Character::clean) + 1,
+                               juce::sendNotificationSync);
+      break;
+    case 9:
+      architecture_.setSelectedId(static_cast<int>(Architecture::acoustic) + 2,
+                                  juce::sendNotificationSync);
+      break;
+    case 10:
+      note_.setSelectedId(48 + 2, juce::sendNotificationSync);
+      break;
+    case 11:
+      subgenre_.setSelectedId(1, juce::sendNotificationSync);
+      break;
+    case 12:
+      chooseFamily(5); // House -> Hardcore, preserving SUB and ATTACK.
+      break;
+    case 13:
+      chooseFamily(2); // All four locks: identical isolated audio is intended.
+      break;
+    case 14:
+      chooseFamily(6);
+      stop(); // STOP must suppress an audition still waiting for rendering.
+      break;
+    case 15:
+      chooseFamily(7); // Audition also works when LOOP is off.
+      break;
+    case 16:
+      genre_.setSelectedId(1, juce::sendNotificationSync);
+      break;
+    case 17:
+      mode_.setSelectedId(static_cast<int>(Mode::deep) + 1,
+                          juce::sendNotificationSync);
+      break;
+    case 18:
+      count_.setSelectedId(4, juce::sendNotificationSync);
+      generate_.onClick(); // Playing loop must follow a new generated batch.
+      break;
+    default:
+      throw std::runtime_error("Unknown style test step");
+    }
+  }
+  require(busy_, "Selecting a style did not start a render");
+}
+
+void GeneticLab::smokeStyleCheck() {
+  const bool batch = smokeStyleStep_ == 18;
+  const auto expected = batch ? 4u : 1u;
+  require(session_.visible.size() == expected,
+          "Style preview generated COUNT candidates instead of one");
+  require(session_.library.entries().size() ==
+              smokeStyleLibrarySize_ + expected,
+          "Style preview lost history or created extra candidates");
+  require(session_.library.at(static_cast<std::size_t>(smokeParentIndex_)) ==
+              smokeParent_,
+          "Changing style overwrote the previous sound");
+  require(count_.getSelectedId() == (batch ? 4 : 20) &&
+              session_.settings.count == (batch ? 4 : 20),
+          "Style preview changed the user's batch count");
+  require(scope_.getSelectedId() == 1, "Style preview left layer solo enabled");
+  const auto audio = listeningSamples(current());
+  if (smokeStyleStep_ != 13)
+    require(audio != smokeStyleAudio_, "Style selection kept the old audio");
+  else {
+    const auto before = render(smokeParent_, 48000, true);
+    require(render(current(), 48000, true).layers == before.layers,
+            "All-locked style preview changed an isolated layer");
+    require(status_.getText().contains("4 DNA LOCK"),
+            "All-locked preview does not explain why the sound is unchanged");
+  }
+  if (smokeStyleStep_ == 12) {
+    const auto before = render(smokeParent_, 48000, true);
+    const auto after = render(current(), 48000, true);
+    require(after.layers[0] == before.layers[0] &&
+                after.layers[1] == before.layers[1],
+            "Changing style ignored DNA SUB/ATTACK locks");
+    require(current().parents == std::vector<std::string>{smokeParent_.id},
+            "Locked style preview lost its parent");
+  }
+  if (smokeStyleStep_ == 14)
+    require(!playing_ && acceptedAuditions_ == smokeStyleAuditions_,
+            "Pending style preview restarted after STOP");
+  else {
+    require(acceptedAuditions_ == smokeStyleAuditions_ + 1,
+            "Style action did not queue exactly one actual audition");
+    require(lastAudition_ == audio && listeningIndex_ == -1 &&
+                !listeningComparison_ && lastAuditionGain_ == 1,
+            "Playback buffer does not match the selected style's real mix");
+    require(playing_ == session_.loop,
+            "Style audition did not respect LOOP / one-shot");
+  }
+  if (smokeStyleStep_ < 8) {
+    require(current().profileId ==
+                profiles_.at(static_cast<std::size_t>(smokeStyleStep_)).id,
+            "Genre selection rendered the wrong profile");
+    const auto &request = *session_.settings.universal;
+    require(request.character == Character::neutral &&
+                request.overrideArchitecture == Architecture::count &&
+                request.note == 0,
+            "Old browser overrides masked the new family's recipe");
+  }
+  if (smokeStyleStep_ == 10)
+    require(std::abs(current().sub.endHz - 130.8127826503) < 1e-6,
+            "Selecting NOTE did not retune the rendered kick");
+  if (smokeStyleStep_ >= 16)
+    require(current().engine == engineVersion,
+            "Legacy mode selection no longer renders GSE 0.3 audio");
+  if (++smokeStyleStep_ <= 18) {
+    smokeStyleChange();
+    return;
+  }
+  // Single-clicking a library card during a loop must update the audio too.
+  cards_.onSelect(smokeParentIndex_, false);
+  require(playing_ && acceptedAuditions_ == smokeStyleAuditions_ + 2 &&
+              lastAudition_ == listeningSamples(current()),
+          "Playing loop did not follow a single-click library selection");
+  stop();
+  smokeStage_ = 7;
+  history_.onClick();
 }

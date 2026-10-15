@@ -44,6 +44,12 @@ def main():
             report = json.loads(report_path.read_text())
             if report.get('result') != 'passed' or report.get('theme') != 'krava-universal-004':
                 raise RuntimeError('GUI test did not pass')
+            if (report.get('applicationVersion') != '0.4.1'
+                or report.get('styleDropdownActions') != 18
+                or report.get('styleSelectionAuditions') != 17
+                or not report.get('styleSelectionChangesAudio')
+                or not report.get('playingBufferFollowsSelectionAndGeneration')):
+                raise RuntimeError('Style selection / playback regression was not verified')
             # A screenshot must be one complete PNG, including on repeated runs.
             # FileOutputStream otherwise appends to an existing screenshot by default.
             png = (output / 'instrument-004.png').read_bytes()

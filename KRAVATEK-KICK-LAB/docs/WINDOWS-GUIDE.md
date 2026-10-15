@@ -1,15 +1,17 @@
-# KRAVA-KICK LAB 0.4 — Universal Kick Engine
+# KRAVA-KICK LAB 0.4.1 — Universal Kick Engine
 
 1. Décompresse entièrement l'archive et ouvre **KravaKickLab.exe**.
 2. Pour comparer immédiatement les huit familles : **OPEN → Examples/Universal/reference.session.json**. Les 24 sons sont déjà dans la bibliothèque. Un clic sélectionne, un double-clic écoute. Désactive **LOOP** pour entendre les longues 808 entièrement.
-3. Choisis **GENRE**, puis **SUBGENRE / PROFILE**. Le navigateur règle les prochaines générations : il ne remplace pas le son déjà sélectionné. Les huit profils actuels sont Classic House, Classic Techno, Full-On Psytrance, Driven Hard Techno, Tonal Hardstyle, Driven Hardcore, Long Tuned 808 et Hybrid Experimental.
+3. Choisis **GENRE**, puis **SUBGENRE / PROFILE**. La **0.4.1** calcule et écoute un candidat dès le choix du style. L'ancien son reste dans HISTORY ; COUNT ne change pas. Changer de famille remet CHARACTER / ARCHITECTURE / NOTE sur PROFILE / AUTO. Les huit profils actuels sont Classic House, Classic Techno, Full-On Psytrance, Driven Hard Techno, Tonal Hardstyle, Driven Hardcore, Long Tuned 808 et Hybrid Experimental.
 4. Règle **NOVELTY**, **COUNT 4/8/12/20**, puis **GENERATE**. **REGENERATE** produit un nouveau candidat. Même graine de lot et mêmes réglages donnent le même lot dans les mêmes conditions de calcul.
-5. **CHARACTER** transforme le caractère ; **NEXT ARCHITECTURE** force une architecture de synthèse, même hors de l'esthétique habituelle du genre. **NEXT NOTE** accorde les prochains sons. Les noms de notes utilisent les numéros MIDI, mais cette version ne reçoit pas de clavier MIDI.
-6. Sélectionne ton préféré, active **LOCK SUB / ATTACK / BODY / TAIL**, puis **EVOLVE**. Le parent reste intact. Tu peux changer de genre avant EVOLVE pour aller progressivement vers une autre famille ; ce n'est pas encore un mélange pondéré de deux profils.
+5. **CHARACTER** transforme le caractère ; **ARCHITECTURE** force une architecture de synthèse, même hors de l'esthétique habituelle du genre. **NOTE** accorde le son. Chacune de ces sélections rend et écoute un nouvel aperçu. Les noms de notes utilisent les numéros MIDI, mais cette version ne reçoit pas de clavier MIDI.
+6. Sélectionne ton préféré, active **LOCK SUB / ATTACK / BODY / TAIL**, puis **EVOLVE**. Le parent reste intact. Changer de genre avec des verrous conserve d'abord ces couches dans l'aperçu, puis EVOLVE permet d'en explorer les variantes ; ce n'est pas encore un mélange pondéré de deux profils.
 7. Pour comparer : sélectionne un son, **SET A** ; sélectionne un autre, **SET B** ; puis **A >**, **B >** ou **A/B**. **MATCH RMS** atténue le plus fort sur une fenêtre de 400 ms. Désactive-le pour les niveaux réels. Les fichiers ne changent pas. Ce n'est pas une égalisation LUFS.
 8. **SYNTH / FX** ouvre les pages BODY FX, TAIL FX et SYNTH/GLIDE : distorsion, pré/postfiltre, seconde saturation, multibande, quantification/sample hold, enveloppe de drive, phase du sub, glides et membrane. Les paramètres grisés sont sans effet dans le contexte choisi. Cliquer en dehors ferme le panneau.
-9. Les potentiomètres et les trois points PITCH/AMP éditent le son. **KEEP EDIT** ajoute un enfant ; SAVE/EXPORT/EVOLVE le font également. Les verrous concernent EVOLVE, pas une édition manuelle volontaire. Les valeurs sont saisissables au clavier.
+9. Les potentiomètres et les trois points PITCH/AMP éditent le son. **KEEP EDIT** ajoute un enfant ; SAVE/EXPORT/EVOLVE le font également. Les verrous concernent EVOLVE et l'aperçu de style ; GENERATE et l'édition manuelle restent libres. Les valeurs sont saisissables au clavier.
 10. **SAVE** conserve la session complète. **EXPORT WAV** avec **WAV + JSON** activé écrit du mono PCM 24 bits à 44,1 ou 48 kHz et son fichier de paramètres. Glisse le WAV dans FL Studio.
+
+Si les quatre DNA LOCK sont activés, le son reste identique lors d'un changement de style : déverrouille une couche pour explorer. Le message STYLE l'indique. STOP pendant un calcul empêche l'aperçu de redémarrer. Avec LOOP désactivé, il est joué une seule fois.
 
 **TAIL > BEAT** signale une durée utile dépassant un temps au tempo choisi. Le lecteur LOOP actuel tronque alors la tail avec une courte extinction : désactive LOOP pour entendre le son complet. Les recommandations BPM des profils ne bloquent aucun genre ; le lecteur accepte 40–400 BPM.
 

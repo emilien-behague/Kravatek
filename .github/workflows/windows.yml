@@ -56,6 +56,9 @@ jobs:
           if ($process.ExitCode -ne 0) { throw "GUI smoke test failed: $($process.ExitCode)" }
           $report = Get-Content build/windows-x64/gui-smoke/gui-smoke.json | ConvertFrom-Json
           if ($report.result -ne 'passed') { throw 'GUI report missing or failed' }
+          if ($report.applicationVersion -ne '0.4.1' -or $report.styleDropdownActions -ne 18 -or $report.styleSelectionAuditions -ne 17 -or !$report.styleSelectionChangesAudio -or !$report.playingBufferFollowsSelectionAndGeneration) {
+            throw 'Style selection / playback regression was not verified'
+          }
       - name: Package instrument, genetic session and listening examples
         run: |
           New-Item -ItemType Directory -Force build/package | Out-Null

@@ -3,7 +3,7 @@
 class KickLabApplication final : public juce::JUCEApplication {
 public:
     const juce::String getApplicationName() override { return "KRAVA-KICK LAB"; }
-    const juce::String getApplicationVersion() override { return "0.4.0"; }
+    const juce::String getApplicationVersion() override { return "0.4.1"; }
     bool moreThanOneInstanceAllowed() override { return true; }
     void initialise(const juce::String& commandLine) override {
         window_ = std::make_unique<Window>();
@@ -45,7 +45,7 @@ private:
     };
     class Window final : public juce::DocumentWindow {
     public:
-        Window() : DocumentWindow(juce::String::fromUTF8("KRAVA-KICK LAB — UNIVERSAL KICK ENGINE 0.4"),
+        Window() : DocumentWindow(juce::String::fromUTF8("KRAVA-KICK LAB — UNIVERSAL KICK ENGINE 0.4.1"),
                     krui::blue, DocumentWindow::allButtons) {
             setLookAndFeel(&lookAndFeel_);
             setUsingNativeTitleBar(false);

@@ -52,7 +52,7 @@ private:
     subLength,
     controlCount
   };
-  enum class Job { create, evolve, refresh };
+  enum class Job { create, evolve, refresh, style };
   kravatek::genetic::Session session_;
   std::optional<kravatek::genetic::Genome> edit_;
   std::map<std::string, kravatek::genetic::Candidate> cache_;
@@ -68,6 +68,7 @@ private:
   juce::Rectangle<int> browserBounds_;
   void syncBrowser();
   void chooseGenre();
+  void previewStyle();
   juce::CallOutBox &openDetails();
   void updateOverlap();
   int smokeProfile_ = 0;
@@ -76,8 +77,9 @@ private:
   int listeningIndex_ = -1;
   bool listeningComparison_ = false;
   bool busy_ = false, manualPending_ = false, playing_ = false, dirty_ = false,
-       activeA_ = false;
+       activeA_ = false, previewAuditionPending_ = false;
   double lastAuditionGain_ = 1;
+  std::uint64_t acceptedAuditions_ = 0, smokeStyleAuditions_ = 0;
   std::vector<float> lastAudition_;
   krui::Brand brand_;
   GeneticGraph graph_;
@@ -107,6 +109,11 @@ private:
   int smokeStage_ = 0, smokeParentIndex_ = -1;
   kravatek::genetic::Genome smokeParent_;
   std::string smokeSaved_;
+  std::vector<float> smokeStyleAudio_;
+  std::size_t smokeStyleLibrarySize_ = 0;
+  int smokeStyleStep_ = 0;
+  void smokeStyleChange();
+  void smokeStyleCheck();
   juce::File smokeDirectory_;
   std::function<void(bool, juce::String)> smokeCompletion_;
   const kravatek::genetic::Genome &current() const;
@@ -120,7 +127,8 @@ private:
   void refreshCurrent();
   void timerCallback() override;
   void readSettings();
-  void startBatch(bool evolving, bool regenerate = false);
+  void startBatch(bool evolving, bool regenerate = false,
+                  bool stylePreview = false);
   void refreshLibrary(std::vector<int>);
   void finishJob(std::vector<kravatek::genetic::Candidate>, Job,
                  int keepSelection, juce::String error);

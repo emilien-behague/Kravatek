@@ -84,7 +84,7 @@ class Brand final : public juce::Component {
                        scale);
     }
     g.setFont(mono(11, true));
-    g.drawText("L A B   /   U N I V E R S A L  0.4",
+    g.drawText("L A B   /   U N I V E R S A L  0.4.1",
                face.withY(face.getBottom() - 18).withHeight(16),
                juce::Justification::centred);
   }
