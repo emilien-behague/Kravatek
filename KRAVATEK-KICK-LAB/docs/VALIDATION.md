@@ -55,7 +55,9 @@ Les rendus, binaires et dossiers de compilation sont ignorés par Git. Les sourc
 
 La compilation GitHub Actions **[Windows prototype #1](https://github.com/emilien-behague/Kravatek/actions/runs/38715711811)** a réussi le 15 octobre 2026, sur le commit `d538bb916edc71731e732a283d472e895d982544`. Durée totale indiquée par GitHub : **2 min 31 s**. La configuration MSVC x64, la compilation Release, les 14 tests, le test fonctionnel de l'interface et le paquet ont terminé avec succès.
 
-Le paquet **KRAVATEK-KICK-LAB-Windows-x64** a été produit (2,06 Mo), ainsi que **Windows-test-results**. Ce premier paquet utilise l'apparence initiale ; le thème néon ajouté ensuite est validé dans le cloud et doit être compilé par l'exécution Windows correspondant à sa mise à jour.
+La version au thème néon a ensuite réussi **[Windows prototype #2](https://github.com/emilien-behague/Kravatek/actions/runs/38717245625)** sur le commit `fda9f38`, en **3 min 37 s**. Cette exécution comprend la nouvelle interface, les 14 tests DSP/lecture/WAV et le test fonctionnel de l'interface avec RESTORE. Le paquet **KRAVATEK-KICK-LAB-Windows-x64** est disponible dans la section **Artifacts** de cette exécution : **2,07 Mo**, digest publié par GitHub `sha256:e09520ca335239f9ac5ae0bcf86e3909bc408bc7f3527213e87afad2fc364a5b`.
+
+Les résultats et la capture Windows se trouvent dans le second paquet **Windows-test-results** (193 Ko). Le paquet applicatif contient **KravatekKickLab.exe**, **kravatek-render.exe**, **Kravatek-reference-001.wav** et **LIRE-MOI.md**. Ces fichiers sont produits par les étapes de compilation et d'empaquetage vérifiées dans le workflow. Les archives n'ont pas été téléchargées dans cette instance : leur disponibilité, leur taille et leur digest ont été vérifiés sur GitHub, et non recalculés sur une copie locale.
 
 La machine fournit Linux et GCC, sans Visual Studio/MSVC. Une tentative avec un compilateur Windows MinGW local a été arrêtée après le diagnostic explicite de JUCE : « MinGW is not supported. Please use an alternative compiler. » Le framework n'a pas été modifié pour contourner cette restriction.
 
