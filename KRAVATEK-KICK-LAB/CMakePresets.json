@@ -1,0 +1,29 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": { "major": 3, "minor": 22, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "windows-x64",
+      "displayName": "Windows x64 / Visual Studio 2022",
+      "generator": "Visual Studio 17 2022",
+      "architecture": "x64",
+      "binaryDir": "${sourceDir}/build/windows-x64",
+      "cacheVariables": { "KRAVATEK_BUILD_APP": "ON", "KRAVATEK_BUILD_TESTS": "ON" }
+    },
+    {
+      "name": "dsp-only",
+      "displayName": "Moteur et tests sans JUCE",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/dsp-only",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "KRAVATEK_BUILD_APP": "OFF" }
+    }
+  ],
+  "buildPresets": [
+    { "name": "windows-release", "configurePreset": "windows-x64", "configuration": "Release", "jobs": 2 },
+    { "name": "dsp-release", "configurePreset": "dsp-only", "jobs": 3 }
+  ],
+  "testPresets": [
+    { "name": "windows-release", "configurePreset": "windows-x64", "configuration": "Release", "output": { "outputOnFailure": true } },
+    { "name": "dsp-release", "configurePreset": "dsp-only", "output": { "outputOnFailure": true } }
+  ]
+}

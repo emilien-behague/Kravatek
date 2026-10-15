@@ -1,0 +1,58 @@
+name: Windows prototype
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-x64:
+    runs-on: windows-2022
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: KRAVATEK-KICK-LAB
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Toolchain versions
+        run: |
+          cmake --version
+          git --version
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          & $vswhere -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationVersion
+      - name: Configure MSVC x64
+        run: cmake --preset windows-x64
+      - name: Build Release
+        run: cmake --build --preset windows-release
+      - name: DSP, playback and WAV tests
+        run: ctest --preset windows-release
+      - name: GUI functional test
+        run: |
+          $process = Start-Process -FilePath "build/windows-x64/Release/KravatekKickLab.exe" -ArgumentList '--smoke-test build/windows-x64/gui-smoke' -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw "GUI smoke test failed: $($process.ExitCode)" }
+          $report = Get-Content build/windows-x64/gui-smoke/gui-smoke.json | ConvertFrom-Json
+          if ($report.result -ne 'passed') { throw 'GUI report missing or failed' }
+      - name: Package executable and listening example
+        run: |
+          New-Item -ItemType Directory -Force build/package | Out-Null
+          Copy-Item build/windows-x64/Release/KravatekKickLab.exe build/package/
+          Copy-Item build/windows-x64/Release/kravatek-render.exe build/package/
+          Copy-Item README.md build/package/LIRE-MOI.md
+          & build/windows-x64/Release/kravatek-render.exe --seed 1 --output build/package/Kravatek-reference-001.wav
+          if ($LASTEXITCODE -ne 0) { throw 'WAV generation failed' }
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: KRAVATEK-KICK-LAB-Windows-x64
+          path: KRAVATEK-KICK-LAB/build/package/
+          if-no-files-found: error
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: Windows-test-results
+          path: |
+            KRAVATEK-KICK-LAB/build/windows-x64/Testing/
+            KRAVATEK-KICK-LAB/build/windows-x64/gui-smoke/
