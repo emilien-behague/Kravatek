@@ -11,7 +11,7 @@ La version 001 possède un [rapport historique séparé](VALIDATION-001.md). Ses
 - Effet sur le signal de chacun des 24 paramètres, dans un contexte où sa couche est active ; isolation du sub ; mutation nulle et verrouillage total sans modification du son.
 - EVOLVE préserve les paramètres SUB/ATTACK verrouillés ; GENERATE est reproductible et NOVELTY ouvre les régions expérimentales.
 - Régression d'alias sur une sinusoïde 1800 Hz, drive 30 dB, rendu 48 kHz : composante mesurée à 600 Hz **−69,57 dB par rapport à la fondamentale**. Cette mesure ciblée ne prouve pas l'absence d'aliasing pour tous les réglages.
-- Régression sur une tail à ratio non entier : la modulation utilise un accumulateur de phase indépendant. Le nouveau test échouait avant correction (saut maximal 0,276) ; la limite exigée est 0,04 pour ce signal contrôlé.
+- Régression sur une tail à ratio non entier : la modulation utilise un accumulateur de phase indépendant. Le nouveau test échouait avant correction (saut maximal 0,276) ; le maximum après correction est 0,0196251, sous la limite de 0,04 pour ce signal contrôlé.
 - Analyse crête/RMS calibrée sur une sinusoïde de niveau connu ; spectre Hann 8192 points calibré en dBFS ; cas minuscule et NaN contrôlés.
 - Lecture mono/stéréo, redéclenchement, concurrence, boucle au tempo, silence entre coups et STOP testés.
 - Test réel de l'application sous Xvfb : drive, édition des deux courbes, DNA, EVOLVE, GENERATE, historique, régénération, sauvegarde JSON/rechargement audio exact, rejet d'un preset incomplet, A/B avec RMS de préécoute égalisé à la fréquence réelle du périphérique, export WAV et capture PNG. Accès aux commandes de bas de page vérifié par défilement dans un viewport de 1100 × 708 pixels.
@@ -54,7 +54,13 @@ Les détecteurs mémoire se reproduisent avec `KRAVATEK_BUILD_APP=OFF`, `KRAVATE
 
 ## Windows
 
-La version 0.2 doit encore être validée par une nouvelle exécution MSVC. Le workflow `Windows instrument 0.2` compile l'application, lance les 22 tests et le test GUI, puis produit `KRAVATEK-KICK-LAB-Windows-x64` avec l'application, la CLI, le guide et huit WAV. Le résultat de cette nouvelle exécution sera ajouté ici après vérification.
+La compilation **[Windows instrument 0.2 #5](https://github.com/emilien-behague/Kravatek/actions/runs/38725215481)** a **réussi** sur le commit `53b1c187bd9cde118b8d48b68614699951e06ff9`, en **4 min 05 s**. Ce commit inclut la correction du modulateur de tail à ratio non entier. La configuration MSVC x64, la compilation Release, les 22 tests CTest, le test fonctionnel GUI et l'empaquetage ont terminé avec succès.
+
+Dans **Artifacts**, le paquet **KRAVATEK-KICK-LAB-Windows-x64** fait **2,67 Mo**. Digest publié par GitHub : `sha256:d4abb78db82f93ccfdd9bb40ce0f4c0620cd6d9fce9a355955a7fca4fcbbc5b1`. Il contient **KravatekKickLab.exe**, **kravatek-render.exe**, **LIRE-MOI.md** et huit WAV dans **Examples/**. Le binaire est construit par le workflow à `build/windows-x64/Release/KravatekKickLab.exe`.
+
+Le second paquet **Windows-test-results** fait **190 Ko**, digest GitHub `sha256:2393099c2ccd99981e57595122762db9b234fd652b71dc2bb7149e83d10a4bda`. Il conserve les résultats CTest et le rapport/capture de l'interface Windows.
+
+Le statut, le commit, la durée, la présence et les métadonnées des artefacts ont été vérifiés sur le site public GitHub. **Les archives Windows n'ont pas été téléchargées dans le cloud et leurs digests n'ont pas été recalculés localement** : le téléchargement des artefacts demande une session GitHub. Le créateur peut ouvrir l'exécution ci-dessus, télécharger le paquet dans Artifacts, le décompresser et lancer l'exécutable. La première refonte (avant correction finale de phase) avait également réussi [l'exécution #4](https://github.com/emilien-behague/Kravatek/actions/runs/38724708360) ; utiliser le paquet de **#5**.
 
 ## À valider ensemble
 
