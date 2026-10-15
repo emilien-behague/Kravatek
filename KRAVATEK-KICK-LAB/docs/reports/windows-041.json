@@ -1,0 +1,32 @@
+{
+  "version": "0.4.1",
+  "run": 12,
+  "url": "https://github.com/emilien-behague/Kravatek/actions/runs/38751788048",
+  "commit": "4178fc31f92a4e059e0441775121ee61c7d18309",
+  "status": "success",
+  "duration": "7m 7s",
+  "publicStepResults": {
+    "MSVC Release": "success",
+    "CTest": "success",
+    "GSE PCM24 recall": "success",
+    "UKE PCM24 recall": "success",
+    "GUI style regression": "success",
+    "Packaging": "success",
+    "Artifact upload": "success"
+  },
+  "artifacts": [
+    {
+      "name": "KRAVA-KICK-LAB-Windows-x64",
+      "displaySize": "10.3 MB",
+      "githubSha256": "a340e1b6c74f531c9d71d38ca257cb97dd8abe5b206c146e6419c83003537212"
+    },
+    {
+      "name": "Windows-test-results",
+      "displaySize": "763 KB",
+      "githubSha256": "4d9e1006193d5ad2c1dadc0447792c4985de84609a43d8d292aac325bf28d075"
+    }
+  ],
+  "archivesDownloadedInCloud": false,
+  "digestsRecomputedInCloud": false,
+  "physicalListeningVerified": false
+}

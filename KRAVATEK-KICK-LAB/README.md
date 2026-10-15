@@ -6,7 +6,7 @@ Premier ensemble **Universal Kick Engine** : huit profils musicaux, six points d
 
 ## Ouvrir et écouter
 
-1. Ouvre la dernière exécution réussie **Windows universal lab 0.4** dans [GitHub Actions](https://github.com/emilien-behague/Kravatek/actions).
+1. Ouvre la [compilation Windows **0.4.1** vérifiée (nº 12)](https://github.com/emilien-behague/Kravatek/actions/runs/38751788048).
 2. Télécharge **KRAVA-KICK-LAB-Windows-x64** dans Artifacts, en étant connecté à GitHub. Décompresse et ouvre **KravaKickLab.exe**.
 3. **OPEN → Examples/Universal/reference.session.json** charge 24 sons des huit profils pour comparaison immédiate. Désactive LOOP pour les longues tails.
 

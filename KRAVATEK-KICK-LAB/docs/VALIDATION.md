@@ -26,7 +26,15 @@ Rapports conservés : [avec périphérique silencieux](reports/gui-041.json) et 
 
 ## Windows
 
-Les premières exécutions 0.4.1 passent compilation, 46 tests et exports, puis échouent au nouveau contrôle GUI. Le banc de lecture sans périphérique et un diagnostic GUI public ont été ajoutés ; la nouvelle exécution Windows doit encore être vérifiée. Aucun nouveau `.exe` Windows n'est annoncé avant sa réussite. Le paquet attendu est `KRAVA-KICK-LAB-Windows-x64` ; l'exécutable est `KravaKickLab.exe` à sa racine, et `build/windows-x64/Release/KravaKickLab.exe` dans le job.
+La compilation **[Windows universal lab 0.4 nº 12](https://github.com/emilien-behague/Kravatek/actions/runs/38751788048)** a **réussi en 7 min 7 s**, sur le commit `4178fc31f92a4e059e0441775121ee61c7d18309`. Configuration MSVC x64, build Release, **46 tests CTest**, dix contrôles PCM24 GSE et seize UKE, **test GUI avec la régression de style**, empaquetage et téléversement ont terminé avec succès. Les statuts finaux de ces étapes ont été vérifiés sur la page publique du job.
+
+Dans **Artifacts**, télécharger **KRAVA-KICK-LAB-Windows-x64** (**10,3 Mo**), décompresser, puis ouvrir **KravaKickLab.exe** à la racine. Chemin dans le job : `build/windows-x64/Release/KravaKickLab.exe`. La fenêtre et les propriétés du fichier indiquent **0.4.1**. Les profils, les 48 WAV/JSON de référence, les CLI et le guide sont inclus.
+
+Digest publié par GitHub pour le paquet : `sha256:a340e1b6c74f531c9d71d38ca257cb97dd8abe5b206c146e6419c83003537212`. **Windows-test-results** fait **763 Ko**, digest GitHub `sha256:4d9e1006193d5ad2c1dadc0447792c4985de84609a43d8d292aac325bf28d075`.
+
+Les archives Windows ne sont **pas téléchargées dans le cloud** : l'accès demande une connexion GitHub. Les digests ci-dessus sont ceux affichés par GitHub et n'ont pas été recalculés localement. Le rapport détaillé Windows distingue la sortie audio active du banc `offline-playback-test` ; aucun test d'écoute humaine n'est revendiqué. Les comptes rendus locaux des deux chemins sont conservés dans Git.
+
+Les tentatives nº 10 et nº 11 passaient compilation, CTest et exports, puis échouaient au nouveau test GUI. La nº 12 ajoute les diagnostics précis et le banc de lecture pour un runner sans périphérique, validé séparément dans le cloud. La livraison finale est la **nº 12**. Le tag `v0.4.1` ajoute ce bilan sans modifier le code compilé et testé.
 
 ## Essai simple
 
