@@ -505,12 +505,64 @@ void MainComponent::showClassic(bool classic) {
     for(int i=0;i<getNumChildComponents();++i){auto* c=getChildComponent(i);if(c!=genetic_.get()&&c!=&modeSwitch_)c->setVisible(classic);}
     if(genetic_)genetic_->setVisible(!classic);modeSwitch_.setVisible(true);modeSwitch_.setButtonText(classic?"GENETIC LAB":"CLASSIC 0.2");resized();repaint();
 }
-void MainComponent::runGeneticSmokeTest(const juce::File& directory,std::function<void(bool,juce::String)> done) {
-    showClassic(false);genetic_->runSmokeTest(directory,[this,directory,done=std::move(done)](bool ok,juce::String error){
-        if(ok){try{auto report=juce::JSON::parse(directory.getChildFile("gui-smoke.json").loadFileAsString());auto* object=report.getDynamicObject();if(!object)throw std::runtime_error("Missing genetic GUI report");object->setProperty("audioDeviceActive",audioActive_.load());object->setProperty("audioCallbacks",static_cast<juce::int64>(callbacks_.load()));object->setProperty("classic002Verified",true);
-            if(!directory.getChildFile("gui-smoke.json").replaceWithText(juce::JSON::toString(report)))throw std::runtime_error("Cannot save complete GUI report");
-            auto image=createComponentSnapshot(getLocalBounds());auto stream=directory.getChildFile("instrument-004.png").createOutputStream();if(!stream||!stream->setPosition(0)||stream->truncate().failed()||!juce::PNGImageFormat().writeImageToStream(image,*stream))throw std::runtime_error("Cannot save genetic screenshot");
-        }catch(const std::exception& e){ok=false;error=e.what();}}
-        done(ok,error);
-    });
+void MainComponent::runGeneticSmokeTest(
+    const juce::File& directory, std::function<void(bool,juce::String)> done,
+    bool forceOfflineAudio) {
+    showClassic(false);
+    const bool offline = forceOfflineAudio || !audioActive_.load();
+    auto offlineBlocks = std::make_shared<std::uint64_t>(0);
+    if (offline) {
+        // Test-only host for runners without a sound card. Exercise the real
+        // Playback queue/consumer, while leaving audioDeviceActive false.
+        devices_.closeAudioDevice();
+        devices_.removeAudioCallback(this);
+        playback_.reset();
+        playback_.setSampleRate(48000);
+        genetic_->deviceRate = [] { return 48000.0; };
+        genetic_->queueAudio = [this,offlineBlocks](std::span<const float> samples,
+                                                   bool loop, double bpm) {
+            const auto period = loop ? static_cast<std::size_t>(std::llround(48000 * 60 / bpm)) : 0;
+            if (!playback_.queue(samples,period)) return false;
+            std::array<float,512> block{};
+            float* output = block.data();
+            playback_.process(&output,1,static_cast<int>(block.size()));
+            ++*offlineBlocks;
+            double energy = 0;
+            for (float v : block) {
+                if (!std::isfinite(v)) return false;
+                energy += static_cast<double>(v) * v;
+            }
+            return energy > 1e-15;
+        };
+        genetic_->stopAudio = [this,offlineBlocks] {
+            playback_.stop();
+            std::array<float,512> block{};
+            float* output = block.data();
+            playback_.process(&output,1,static_cast<int>(block.size()));
+            ++*offlineBlocks;
+        };
+    }
+    genetic_->runSmokeTest(directory,
+        [this,directory,done=std::move(done),offline,offlineBlocks](bool ok,juce::String error) {
+            if (ok) {
+                try {
+                    auto report = juce::JSON::parse(directory.getChildFile("gui-smoke.json").loadFileAsString());
+                    auto* object = report.getDynamicObject();
+                    if (!object) throw std::runtime_error("Missing genetic GUI report");
+                    object->setProperty("audioDeviceActive",audioActive_.load());
+                    object->setProperty("audioCallbacks",static_cast<juce::int64>(callbacks_.load()));
+                    object->setProperty("previewAudioBackend",offline ? "offline-playback-test" : "device");
+                    object->setProperty("offlinePlaybackBlocks",static_cast<juce::int64>(*offlineBlocks));
+                    object->setProperty("classic002Verified",true);
+                    if (!directory.getChildFile("gui-smoke.json").replaceWithText(juce::JSON::toString(report)))
+                        throw std::runtime_error("Cannot save complete GUI report");
+                    auto image = createComponentSnapshot(getLocalBounds());
+                    auto stream = directory.getChildFile("instrument-004.png").createOutputStream();
+                    if (!stream || !stream->setPosition(0) || stream->truncate().failed() ||
+                        !juce::PNGImageFormat().writeImageToStream(image,*stream))
+                        throw std::runtime_error("Cannot save genetic screenshot");
+                } catch (const std::exception& e) { ok = false; error = e.what(); }
+            }
+            done(ok,error);
+        });
 }

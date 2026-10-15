@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Run the actual JUCE GUI under a private X server and a silent ALSA device."""
 import json
+import argparse
 import os
 from pathlib import Path
 import select
@@ -12,12 +13,18 @@ TOOLS = Path('/workspace/.kravatek-tools')
 
 
 def main():
-    output = PROJECT / 'out/cloud-smoke'
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--offline-audio', action='store_true', help='Exercise the test-only Playback host without a device')
+    args = parser.parse_args()
+    output = PROJECT / ('out/cloud-smoke-offline' if args.offline_audio else 'out/cloud-smoke')
     output.mkdir(parents=True, exist_ok=True)
     # Never accept reports from a previous run.
     report_path = output / 'gui-smoke.json'
     if report_path.exists():
         report_path.unlink()
+    failure_path = output / 'gui-failure.txt'
+    if failure_path.exists():
+        failure_path.unlink()
     read_fd, write_fd = os.pipe()
     server = None
     try:
@@ -36,10 +43,14 @@ def main():
             runtime_env = dict(os.environ,
                 DISPLAY=f':{display}', ALSA_CONFIG_PATH=str(PROJECT / 'tools/cloud-asound.conf'),
                 XDG_CACHE_HOME=str(TOOLS / 'cache'), XDG_CONFIG_HOME=str(TOOLS / 'config'))
-            result = subprocess.run([str(PROJECT / 'build-linux/KravaKickLab'),
-                '--smoke-test', str(output)], cwd=PROJECT, env=runtime_env,
+            command = [str(PROJECT / 'build-linux/KravaKickLab'), '--smoke-test', str(output)]
+            if args.offline_audio:
+                command.append('--offline-audio-test')
+            result = subprocess.run(command, cwd=PROJECT, env=runtime_env,
                 capture_output=True, text=True, timeout=180)
             (output / 'application.log').write_text(result.stdout + result.stderr)
+            if result.returncode and failure_path.exists():
+                print(failure_path.read_text())
             result.check_returncode()
             report = json.loads(report_path.read_text())
             if report.get('result') != 'passed' or report.get('theme') != 'krava-universal-004':
@@ -64,10 +75,16 @@ def main():
                     break
             if offset != len(png) or kind != b'IEND':
                 raise RuntimeError('Screenshot contains stale or appended image data')
-            if not report.get('audioDeviceActive') or report.get('audioCallbacks', 0) <= 0:
+            if args.offline_audio:
+                if (report.get('previewAudioBackend') != 'offline-playback-test'
+                    or report.get('audioDeviceActive')
+                    or report.get('offlinePlaybackBlocks', 0) <= 0):
+                    raise RuntimeError('Offline Playback test host did not execute')
+            elif (report.get('previewAudioBackend') != 'device'
+                or not report.get('audioDeviceActive') or report.get('audioCallbacks', 0) <= 0):
                 raise RuntimeError('Silent audio device did not execute real JUCE audio callbacks')
             print(json.dumps(report, indent=2))
-            print('GUI, seed, sliders and WAV export verified. Silent device only; physical listening untested.')
+            print('GUI, seed, sliders and WAV export verified. Test backend only; physical listening untested.')
     finally:
         if write_fd >= 0:
             os.close(write_fd)

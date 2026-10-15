@@ -12,13 +12,15 @@ public:
             const auto index = arguments.indexOf("--smoke-test");
             if (index + 1 >= arguments.size()) { setApplicationReturnValue(2); quit(); return; }
             const auto output = juce::File::getCurrentWorkingDirectory().getChildFile(arguments[index + 1].unquoted());
-            juce::Timer::callAfterDelay(300, [this, output] {
+            const bool offlineAudio = arguments.contains("--offline-audio-test");
+            juce::Timer::callAfterDelay(300, [this, output, offlineAudio] {
                 try { window_->content().runSmokeTest(output);
-                    window_->content().runGeneticSmokeTest(output,[this](bool ok,juce::String error){
-                        if(!ok){juce::Logger::writeToLog("Genetic GUI failed: "+error);setApplicationReturnValue(1);}quit();
-                    });
+                    window_->content().runGeneticSmokeTest(output,[this,output](bool ok,juce::String error){
+                        if(!ok){output.getChildFile("gui-failure.txt").replaceWithText(error);juce::Logger::writeToLog("Genetic GUI failed: "+error);setApplicationReturnValue(1);}quit();
+                    },offlineAudio);
                 }
                 catch (const std::exception& error) {
+                    output.getChildFile("gui-failure.txt").replaceWithText(error.what());
                     juce::Logger::writeToLog("GUI smoke failed: " + juce::String(error.what()));
                     setApplicationReturnValue(1);quit();
                 }

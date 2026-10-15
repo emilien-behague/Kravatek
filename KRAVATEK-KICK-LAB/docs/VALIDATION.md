@@ -6,7 +6,7 @@ En 0.4.0, choisir un genre modifiait uniquement la recette des prochaines géné
 
 En 0.4.1, GENRE / PROFILE / CHARACTER / ARCHITECTURE / NOTE et les modes GSE rendent puis écoutent un candidat, sans changer COUNT ni écraser l'historique. Un changement de famille réinitialise les surcharges de caractère, architecture et note. DNA LOCK utilise le chemin d'évolution existant et conserve les couches concernées. Quatre verrous expliquent explicitement pourquoi le son est conservé. STOP pendant un rendu empêche la relance ; LOOP désactivé donne une écoute unique. Les sélections de cartes et les lots terminés remplacent également le buffer d'une boucle active.
 
-Les moteurs DSP, versions de rendu, catalogue et formats de paramètres restent identiques à la 0.4.0.
+Les moteurs DSP, versions de rendu, catalogue et formats de paramètres restent identiques à la 0.4.0. Une annulation avant tout candidat conserve le solo précédent, sans changer le signal en cours.
 
 ## Vérifications exécutées dans le cloud
 
@@ -19,13 +19,14 @@ Les moteurs DSP, versions de rendu, catalogue et formats de paramètres restent 
 - CHARACTER, architecture, accordage C3 / MIDI 48, profil chargé depuis un snapshot, modes historiques, mutation avec SUB/ATTACK verrouillés et cas des quatre couches verrouillées vérifiés.
 - Ancien son immuable, un seul candidat par aperçu, COUNT préservé ; nouvelle génération et clic simple d'une carte pendant la boucle transmettent le nouveau signal au lecteur.
 - Les scénarios antérieurs restent exercés : 20 candidats GSE → 8 enfants ; 32 candidats UKE / 8 profils → 8 enfants ; SAVE/OPEN, PCM24/JSON, panneau SYNTH/FX, A/B et petit écran. Historique final : **94 états**.
+- Deuxième exécution GUI **sans périphérique audio** réussie : hôte réservé aux tests, **37 blocs** consommés par le vrai `Playback`, échantillons finis et énergie non nulle. `previewAudioBackend=offline-playback-test`, `audioDeviceActive=false` ; aucune sortie physique simulée dans le rapport. Le test avec périphérique ALSA reste séparé et obligatoire dans le script cloud normal.
 - Workflow contrôlé par actionlint 1.7.7 sans erreur. Le script cloud et le job Windows exigent explicitement les résultats de la régression de style.
 
-Rapport conservé : [gui-041.json](reports/gui-041.json). Capture compilée : [instrument-041.png](images/instrument-041.png). Sorties complètes : `out/cloud-smoke/`. Aucun test d'écoute humaine n'est revendiqué. Les ASan/UBSan de la 0.4.0 sont historiques ; ils n'ont pas été réexécutés pour ce correctif d'interface.
+Rapports conservés : [avec périphérique silencieux](reports/gui-041.json) et [sans périphérique](reports/gui-041-offline.json). Capture compilée : [instrument-041.png](images/instrument-041.png). Sorties complètes : `out/cloud-smoke/`. Aucun test d'écoute humaine n'est revendiqué. Les ASan/UBSan de la 0.4.0 sont historiques ; ils n'ont pas été réexécutés pour ce correctif d'interface.
 
 ## Windows
 
-Compilation et tests Windows à lancer sur le commit du correctif ; aucun nouveau `.exe` Windows n'est annoncé avant leur réussite. Le paquet attendu est `KRAVA-KICK-LAB-Windows-x64` ; l'exécutable est `KravaKickLab.exe` à sa racine, et `build/windows-x64/Release/KravaKickLab.exe` dans le job.
+Les premières exécutions 0.4.1 passent compilation, 46 tests et exports, puis échouent au nouveau contrôle GUI. Le banc de lecture sans périphérique et un diagnostic GUI public ont été ajoutés ; la nouvelle exécution Windows doit encore être vérifiée. Aucun nouveau `.exe` Windows n'est annoncé avant sa réussite. Le paquet attendu est `KRAVA-KICK-LAB-Windows-x64` ; l'exécutable est `KravaKickLab.exe` à sa racine, et `build/windows-x64/Release/KravaKickLab.exe` dans le job.
 
 ## Essai simple
 

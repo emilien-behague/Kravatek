@@ -17,7 +17,7 @@ public:
     void resized() override;
     bool keyPressed(const juce::KeyPress&) override;
     void runSmokeTest(const juce::File& directory);
-    void runGeneticSmokeTest(const juce::File&,std::function<void(bool,juce::String)>);
+    void runGeneticSmokeTest(const juce::File&,std::function<void(bool,juce::String)>,bool offlineAudio = false);
     void showClassic(bool);
 private:
     enum Control {start, end, drop, bend, length, attack, ampShape, release,

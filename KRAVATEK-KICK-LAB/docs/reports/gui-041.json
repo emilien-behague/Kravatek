@@ -35,6 +35,8 @@
   "librarySize": 94,
   "physicalListeningVerified": false,
   "audioDeviceActive": true,
-  "audioCallbacks": 21502092,
+  "audioCallbacks": 21489617,
+  "previewAudioBackend": "device",
+  "offlinePlaybackBlocks": 0,
   "classic002Verified": true
 }

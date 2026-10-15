@@ -53,11 +53,22 @@ jobs:
       - name: GUI functional test
         run: |
           $process = Start-Process -FilePath "build/windows-x64/Release/KravaKickLab.exe" -ArgumentList '--smoke-test build/windows-x64/gui-smoke' -Wait -PassThru
-          if ($process.ExitCode -ne 0) { throw "GUI smoke test failed: $($process.ExitCode)" }
+          if ($process.ExitCode -ne 0) {
+            $detail = 'No failure detail written'
+            if (Test-Path build/windows-x64/gui-smoke/gui-failure.txt) { $detail = Get-Content build/windows-x64/gui-smoke/gui-failure.txt -Raw }
+            $message = $detail.Replace('%', '%25').Replace("`r", '%0D').Replace("`n", '%0A')
+            Write-Output "::error::GUI: $message"
+            throw "GUI smoke test failed: $($process.ExitCode): $detail"
+          }
           $report = Get-Content build/windows-x64/gui-smoke/gui-smoke.json | ConvertFrom-Json
           if ($report.result -ne 'passed') { throw 'GUI report missing or failed' }
           if ($report.applicationVersion -ne '0.4.1' -or $report.styleDropdownActions -ne 18 -or $report.styleSelectionAuditions -ne 17 -or !$report.styleSelectionChangesAudio -or !$report.playingBufferFollowsSelectionAndGeneration) {
             throw 'Style selection / playback regression was not verified'
+          }
+          if ($report.previewAudioBackend -eq 'offline-playback-test') {
+            if ($report.audioDeviceActive -or $report.offlinePlaybackBlocks -le 0) { throw 'Invalid offline Playback report' }
+          } elseif ($report.previewAudioBackend -ne 'device' -or !$report.audioDeviceActive) {
+            throw 'Missing preview test backend'
           }
       - name: Package instrument, genetic session and listening examples
         run: |
