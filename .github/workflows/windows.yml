@@ -1,4 +1,4 @@
-name: Windows instrument 0.2
+name: Windows genetic lab 0.3
 
 on:
   push:
@@ -35,28 +35,39 @@ jobs:
         run: cmake --preset windows-x64
       - name: Build Release
         run: cmake --build --preset windows-release
-      - name: DSP, playback and WAV tests
-        run: ctest --preset windows-release
+      - name: DSP, genetic populations, persistence and WAV tests
+        run: ctest --preset windows-release --output-junit test-results-003.xml
+      - name: Independent PCM24 and exact recall checks
+        run: python tools/validate_genetic_exports.py --renderer build/windows-x64/Release/krava-genome-render.exe --output build/windows-x64/independent-exports
       - name: GUI functional test
         run: |
-          $process = Start-Process -FilePath "build/windows-x64/Release/KravatekKickLab.exe" -ArgumentList '--smoke-test build/windows-x64/gui-smoke' -Wait -PassThru
+          $process = Start-Process -FilePath "build/windows-x64/Release/KravaKickLab.exe" -ArgumentList '--smoke-test build/windows-x64/gui-smoke' -Wait -PassThru
           if ($process.ExitCode -ne 0) { throw "GUI smoke test failed: $($process.ExitCode)" }
           $report = Get-Content build/windows-x64/gui-smoke/gui-smoke.json | ConvertFrom-Json
           if ($report.result -ne 'passed') { throw 'GUI report missing or failed' }
-      - name: Package executable and eight listening examples
+      - name: Package instrument, genetic session and listening examples
         run: |
           New-Item -ItemType Directory -Force build/package | Out-Null
-          Copy-Item build/windows-x64/Release/KravatekKickLab.exe build/package/
-          Copy-Item build/windows-x64/Release/kravatek-render.exe build/package/
+          Copy-Item build/windows-x64/Release/KravaKickLab.exe build/package/
+          Copy-Item build/windows-x64/Release/krava-render.exe build/package/
+          Copy-Item build/windows-x64/Release/krava-genome-render.exe build/package/
           Copy-Item docs/WINDOWS-GUIDE.md build/package/LIRE-MOI.md
           New-Item -ItemType Directory -Force build/package/Examples | Out-Null
+          New-Item -ItemType Directory -Force build/package/Examples/Classic | Out-Null
           foreach ($style in @('reference', 'hard-techno', 'hard-psy', 'schranz', 'hardcore', 'deep', 'experimental', 'mutant')) {
-            & build/windows-x64/Release/kravatek-render.exe --style $style --seed 1 --output "build/package/Examples/$style.wav"
+            & build/windows-x64/Release/krava-render.exe --style $style --seed 1 --output "build/package/Examples/Classic/$style.wav"
             if ($LASTEXITCODE -ne 0) { throw "WAV generation failed: $style" }
           }
+          foreach ($mode in @('deep', 'hard-psy', 'schranz', 'experimental', 'mutant')) {
+            & build/windows-x64/Release/krava-genome-render.exe --mode $mode --seed 1 --novelty .75 --output "build/package/Examples/$mode.wav"
+            if ($LASTEXITCODE -ne 0) { throw "Genetic WAV generation failed: $mode" }
+          }
+          New-Item -ItemType Directory -Force build/package/Examples/Experimental-20 | Out-Null
+          & build/windows-x64/Release/krava-genome-render.exe --mode experimental --seed 778899 --novelty .75 --batch 20 --output build/package/Examples/Experimental-20/kick.wav
+          if ($LASTEXITCODE -ne 0) { throw 'Experimental population failed' }
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: KRAVATEK-KICK-LAB-Windows-x64
+          name: KRAVA-KICK-LAB-Windows-x64
           path: KRAVATEK-KICK-LAB/build/package/
           if-no-files-found: error
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -65,4 +76,7 @@ jobs:
           name: Windows-test-results
           path: |
             KRAVATEK-KICK-LAB/build/windows-x64/Testing/
+            KRAVATEK-KICK-LAB/test-results-003.xml
+            KRAVATEK-KICK-LAB/build/windows-x64/test-output/genetic-100-report.json
             KRAVATEK-KICK-LAB/build/windows-x64/gui-smoke/
+            KRAVATEK-KICK-LAB/build/windows-x64/independent-exports/validation.json

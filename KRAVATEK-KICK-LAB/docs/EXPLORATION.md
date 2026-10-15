@@ -1,30 +1,23 @@
-# Contrat d'exploration
+# Contrat d'exploration génétique 0.3
 
-Les paramètres DSP sont la vérité sauvegardée. Une graine seule ne reconstitue pas une édition manuelle ni une chaîne d'EVOLVE.
+Les paramètres complets sont la vérité sauvegardée. Une graine seule ne reconstitue ni les éditions ni toute une chaîne EVOLVE. La reproductibilité binaire concerne une même version de moteur, plateforme, fréquence et mêmes conditions mathématiques.
 
 | Opération | Entrées | Garantie |
 | --- | --- | --- |
-| Factory | Famille | Base fixe, aucune promesse de genre musical validée par écoute |
-| GENERATE / REGENERATE | Famille, graine, NOVELTY | Même résultat dans les mêmes conditions de rendu |
-| EVOLVE | État source complet, nouvelle graine, amplitude, NOVELTY, verrous | Même transformation ; amplitude zéro conserve le son |
-| SAVE / OPEN | État complet, schéma 002 | Reconstitution exacte testée sur une même plateforme |
+| GENERATE | Mode, graine de lot, NOVELTY, nombre | Lot déterministe ; chaque kick conserve sa graine effective et ses gènes |
+| REGENERATE | Mode, NOVELTY, prochaine graine déterministe | Un nouveau candidat |
+| EVOLVE | Parent complet, graine de lot, mode, NOVELTY, quatre verrous | Enfants distincts dans l'historique ; parent conservé |
+| REFINE | Même opération, amplitude réduite | Architectures/graines internes conservées, variations subtiles autorisées |
+| SAVE / OPEN | Session ou fichier de son versionné | Gènes rechargés exactement ; provenance et version contrôlées |
 
-NOVELTY élargit les régions de tail/mouvement, de repliement, de résonance et de décroissance FM. Ce contrôle biaise la recherche ; il n'évalue ni originalité ni qualité musicale.
+NOVELTY agit continûment sur l'amplitude de recherche et la probabilité d'architectures. CONTROLLED 0–30 %, EXPLORATION 31–70 %, EXPERIMENTAL 71–100 % sont des libellés, pas trois algorithmes discontinus, ni un score d'originalité.
 
-Les sept verrous EVOLVE sont :
+Chaque mode a ses régions et probabilités : DEEP favorise sub/tails régulières, HARD PSY des durées courtes et corps tonals, SCHRANZ drive/grain et interactions, EXPERIMENTAL et MUTANT des structures plus mouvantes. Ces biais ne garantissent pas un résultat musical précis.
 
-- PITCH : départ, fin, durée de chute et courbure.
-- AMP : durée, attaque, extinction et courbure du body.
-- BODY : drive, profondeur et durée FM/PM, harmoniques.
-- ATTACK : niveau/durée du bruit et sa graine.
-- TAIL : niveau, durée, ratio et mouvement.
-- FX : cutoff, résonance, sweep et morphing de distorsion.
-- SUB : fin de pitch, niveau/decay du sub et durée totale. Ce verrou peut donc empêcher certains changements dans les groupes PITCH/AMP déverrouillés.
+Les quatre verrous SUB, ATTACK, BODY et TAIL conservent tous les gènes de leur couche, y compris graine, phase et enveloppe. Les tests comparent les buffers bruts entiers à 44,1 et 48 kHz. Leur perception dans le mix peut évoluer avec les autres couches et la sécurité commune. Les verrous concernent EVOLVE : une édition manuelle volontaire reste possible. Tous verrouillés, l'audio reste identique et la bibliothèque peut contenir plusieurs provenances pour ce même audio.
 
-Le gain de normalisation du mix et les interactions entre couches peuvent changer. Les verrous conservent les paramètres désignés ; ils ne promettent pas une séparation audio parfaite des couches dans le résultat normalisé. Tous verrouillés, l'audio reste identique.
+En exploration, une similarité supérieure à 0,985 entraîne jusqu'à quatre propositions déterministes ; la plus différente est conservée et les proximités restantes sont signalées. REFINE et tous-verrouillés évitent cette recherche. La similarité combine descripteurs audio et corrélation alignée ; elle ne mesure pas l'originalité ni la qualité.
 
-## Futur PROMPT-TO-KICK — non implémenté
+## Futur prompteur — non implémenté
 
-Le futur adaptateur français/anglais devra produire une proposition structurée : schéma, famille, paramètres explicites, verrous et graine. Il devra appeler la validation DSP existante, afficher les paramètres interprétés et permettre leur correction avant rendu. Aucun texte ne pourra exécuter du code ou contourner les plages du moteur. Les tests devront porter sur des descriptions françaises/anglaises équivalentes, les contraintes contradictoires et les valeurs hors plage.
-
-Ce contrat et les fonctions typées `generate`/`evolve` préparent l'intégration. Il n'existe encore ni parseur linguistique ni modèle IA dans l'application ; aucun bouton de prompteur actif n'est présent.
+Le futur adaptateur français/anglais devra produire un génome structuré soumis aux mêmes validations et visible avant rendu. Aucun parseur linguistique, IA ou service connecté n'est implémenté. Aucune commande active n'en simule le fonctionnement.

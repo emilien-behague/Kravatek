@@ -1,69 +1,59 @@
-# Validation 0.2 — 15 octobre 2026
+# Validation 0.3 — 15 octobre 2026
 
-La version 001 possède un [rapport historique séparé](VALIDATION-001.md). Ses résultats ne valident pas la 0.2.
+Les rapports [001](VALIDATION-001.md) et [0.2](VALIDATION-002.md) restent historiques. Le [suivi de mission](MISSION-003.md) contient l'audit initial, les fichiers modifiés et les limites détaillées.
 
-## Résultats exécutés dans le cloud Linux
+## Résultats réellement exécutés sous Linux
 
-- Application et moteur compilés en Release, C++20/GCC 14.2, JUCE épinglé à `ea77444750de45e036e0279bb0291144bf8e3688`.
-- **22 tests CTest réussis, aucun échec, aucun test ignoré.** `cli-invalid` est un rejet attendu : son code d'erreur est le comportement testé.
-- **22 tests réussis en Debug avec AddressSanitizer et UndefinedBehaviorSanitizer.**
-- Huit familles rendues à 8, 44,1, 48, 96 et 192 kHz ; variations, reproductibilité, plages invalides, filtre à résonance maximale et sweeps extrêmes.
-- Effet sur le signal de chacun des 24 paramètres, dans un contexte où sa couche est active ; isolation du sub ; mutation nulle et verrouillage total sans modification du son.
-- EVOLVE préserve les paramètres SUB/ATTACK verrouillés ; GENERATE est reproductible et NOVELTY ouvre les régions expérimentales.
-- Régression d'alias sur une sinusoïde 1800 Hz, drive 30 dB, rendu 48 kHz : composante mesurée à 600 Hz **−69,57 dB par rapport à la fondamentale**. Cette mesure ciblée ne prouve pas l'absence d'aliasing pour tous les réglages.
-- Régression sur une tail à ratio non entier : la modulation utilise un accumulateur de phase indépendant. Le nouveau test échouait avant correction (saut maximal 0,276) ; le maximum après correction est 0,0196251, sous la limite de 0,04 pour ce signal contrôlé.
-- Analyse crête/RMS calibrée sur une sinusoïde de niveau connu ; spectre Hann 8192 points calibré en dBFS ; cas minuscule et NaN contrôlés.
-- Lecture mono/stéréo, redéclenchement, concurrence, boucle au tempo, silence entre coups et STOP testés.
-- Test réel de l'application sous Xvfb : drive, édition des deux courbes, DNA, EVOLVE, GENERATE, historique, régénération, sauvegarde JSON/rechargement audio exact, rejet d'un preset incomplet, A/B avec RMS de préécoute égalisé à la fréquence réelle du périphérique, export WAV et capture PNG. Accès aux commandes de bas de page vérifié par défilement dans un viewport de 1100 × 708 pixels.
-- Callbacks JUCE exécutés sur une sortie ALSA **virtuelle silencieuse** ; aucune écoute physique déduite de ce résultat.
-- Huit WAV lus et mesurés indépendamment par `wave`/Python ; export GUI Warehouse identique **octet pour octet** à l'export CLI correspondant.
-- `tools/setup_cloud.py` réexécuté avec succès : dépendances locales, build incrémental et 22 tests. Le script ne fait pas d'installation système.
-- Workflow Windows vérifié par actionlint 1.7.7 sans erreur.
+- Build Release application C++20/JUCE et CLI réussi, GCC 14.2, JUCE épinglé `ea77444750de45e036e0279bb0291144bf8e3688`.
+- **35/35 tests CTest réussis**, aucun ignoré : 22 régressions historiques, 8 tests génétiques, 5 tests de persistance/historique/export.
+- **30/30 tests DSP réussis sous AddressSanitizer et UndefinedBehaviorSanitizer**, en Debug sans JUCE. Les 5 tests JSON/GUI ne font pas partie de cette suite instrumentée.
+- Baseline 0.2 compilée et testée avant modification, copie de presets/audio et point Git `archive/pre-mission-003`.
+- Génération de paramètres valides pour les cinq modes et plusieurs niveaux NOVELTY ; PRNG et identité SHA-256 vérifiés sur références. Graine identique : paramètres/audio identiques ; graines différentes : différences constatées.
+- Verrous testés sur tous les groupes, dont SUB+ATTACK sur 20 mutations extrêmes aux deux fréquences cibles ; comparaison exacte des vecteurs audio isolés, longueurs incluses. Parents immuables, mutation nulle et tous-verrouillés contrôlés.
+- JSON : round-trip exact de 52 génomes et de 100 presets legacy, rejet de sessions/identités/plages invalides, populations 4/8/12/20 et sauvegarde/relecture audio exacte.
+- WAV PCM24, fréquence, taille, métadonnées, quantification et signaux invalides testés. Le WAV Warehouse 002 reste identique octet pour octet au témoin antérieur.
+- Références sinusoïdales pour crête/RMS, centre spectral, bandes et F0 ; silence et petits buffers contrôlés. La confiance F0 ne garantit pas une note unique pour les textures complexes.
+- Régression d'alias ciblée GSE : **−66,39 dB** à 600 Hz par rapport à une fondamentale 1800 Hz, drive 30 dB, 48 kHz. Le test historique reste à **−69,57 dB**. Ces mesures ne prouvent pas l'absence d'aliasing dans tous les cas extrêmes.
+- Test GUI réel : parcours 20 EXPERIMENTAL à 75 % → parent sélectionné → 8 mutations SUB+ATTACK exactes → édition → A/B ajusté/réel → solo → sauvegarde/relecture d'une bibliothèque de 31 états → WAV/JSON. Les fonctions CLASSIC 0.2 restent aussi vérifiées. Le petit viewport est parcouru par défilement.
+- Callbacks JUCE exécutés sur une sortie ALSA virtuelle silencieuse ; **aucune écoute physique revendiquée**.
+- Dix exports des cinq modes à 44,1/48 kHz lus indépendamment par `wave`/Python : mono, PCM24, fréquence, longueur, crête, DC et bords vérifiés ; chaque rechargement depuis `.krava.json` produit un WAV identique octet pour octet. Script : `tools/validate_genetic_exports.py`, mesures : `out/examples-003/validation.json`.
+- Workflow Windows contrôlé avec actionlint 1.7.7, sans erreur.
 
-## Exemples mesurés
+## Population fixe de 100 candidats
 
-Tous : mono, 48 kHz, PCM 24 bits, crête −3 dBFS à la précision de quantification. Première et dernière valeurs nulles ; moyenne DC absolue inférieure à 4 × 10⁻¹⁰.
+100 graines réparties entre les cinq modes, rendues à 44,1 et 48 kHz, soit 200 rendus. Aucun plantage, NaN, infini ou dépassement de crête permis par les assertions.
 
-| Base, graine 1 | Durée | RMS du fichier complet |
-| --- | --- | --- |
-| Reference | 320 ms | −16,54 dBFS |
-| Warehouse / Hard Techno | 410 ms | −10,73 dBFS |
-| Hard Psy | 190 ms | −11,08 dBFS |
-| Schranz | 460 ms | −9,21 dBFS |
-| Hardcore | 560 ms | −6,33 dBFS |
-| Deep | 720 ms | −18,88 dBFS |
-| Experimental | 850 ms | −14,88 dBFS |
-| Mutant | 930 ms | −15,24 dBFS |
+| Mesure | Résultat Linux Release |
+| --- | --- |
+| Identités / audios distincts à 48 kHz | 100 / 100 |
+| Architectures BODY / TAIL représentées | 4 / 4 |
+| Distance moyenne / maximale des descripteurs | 0,178927 / 0,427551 |
+| RMS min / max du fichier complet | −27,3683 / −12,9234 dBFS |
+| Crête maximale | −3,9796 dBFS |
+| Réductions de sécurité dans cette population | 0 |
+| Temps observé avec d'autres tests concurrents | 15,4 s pour 200 rendus |
 
-Ces niveaux décrivent des signaux, pas un classement de qualité. La normalisation en crête ne donne pas la même sonie. La comparaison A/B utilise une fenêtre RMS fixe de 400 ms, avec silence ajouté aux sons plus courts et atténuation du plus fort.
+Ce temps n'est pas un benchmark garanti sur le PC du créateur. La plage de RMS confirme que la dynamique n'est pas cachée par une normalisation systématique. La diversité des descripteurs ne démontre ni qualité musicale ni originalité absolue. Les fortes variations entre échantillons de textures agressives ne constituent pas, seules, un détecteur de clics ; les régressions de continuité utilisent des signaux contrôlés.
 
-## Fichiers locaux et reproduction
-
-- `build-linux/KravatekKickLab` : binaire **Linux**, pas un `.exe` Windows.
-- `out/examples-002/*.wav` : huit exemples ; `out/audio-validation-002.json` : mesures et SHA-256.
-- `out/cloud-smoke/gui-smoke.json`, `gui-smoke.wav`, `prototype-002.png` : dernière vérification graphique.
-- `docs/images/instrument-002.png` : capture réelle conservée dans Git.
-- `build-linux/Testing/` et `build-sanitized/Testing/` : résultats des suites exécutées.
+## Reproduction et fichiers locaux
 
 ```bash
 python3 tools/setup_cloud.py
 python3 tools/run_cloud_smoke.py
 ```
 
-Les détecteurs mémoire se reproduisent avec `KRAVATEK_BUILD_APP=OFF`, `KRAVATEK_ENABLE_SANITIZERS=ON`, configuration Debug, puis build/CTest. Les sorties et dépendances sont dans le workspace et ignorées par Git ; les processus Xvfb temporaires sont arrêtés par le script.
+- `build-linux/KravaKickLab` : application **Linux** ; les noms des anciens fichiers personnels sont inchangés.
+- `build-linux/test-results-003.xml`, `build-linux/test-output/genetic-100-report.json` : suite complète et population fixe.
+- `build-sanitized/test-results-003-sanitized.xml` : suite DSP ASan/UBSan.
+- `out/cloud-smoke/gui-smoke.json`, `genetic-session.json`, `gui-smoke-003.wav`, `.krava.json`, `instrument-003.png` : scénario GUI réel.
+- `docs/images/instrument-003.png` : capture réelle conservée dans Git.
+
+Les builds et sorties sont ignorés par Git. Les détecteurs mémoire utilisent `KRAVATEK_BUILD_APP=OFF`, `KRAVATEK_ENABLE_SANITIZERS=ON`, build Debug et CTest. Le script cloud n'installe pas de paquets système.
 
 ## Windows
 
-La compilation **[Windows instrument 0.2 #5](https://github.com/emilien-behague/Kravatek/actions/runs/38725215481)** a **réussi** sur le commit `53b1c187bd9cde118b8d48b68614699951e06ff9`, en **4 min 05 s**. Ce commit inclut la correction du modulateur de tail à ratio non entier. La configuration MSVC x64, la compilation Release, les 22 tests CTest, le test fonctionnel GUI et l'empaquetage ont terminé avec succès.
+La compilation MSVC x64 de la 0.3 doit être vérifiée après publication. Le chemin cible est `build/windows-x64/Release/KravaKickLab.exe`. Le workflow produit **KRAVA-KICK-LAB-Windows-x64** avec l'exécutable, deux CLI, le guide et les exemples ; la présence et le succès seront consignés ici après l'exécution effective. Ne pas utiliser un résultat 0.2 comme validation 0.3.
 
-Dans **Artifacts**, le paquet **KRAVATEK-KICK-LAB-Windows-x64** fait **2,67 Mo**. Digest publié par GitHub : `sha256:d4abb78db82f93ccfdd9bb40ce0f4c0620cd6d9fce9a355955a7fca4fcbbc5b1`. Il contient **KravatekKickLab.exe**, **kravatek-render.exe**, **LIRE-MOI.md** et huit WAV dans **Examples/**. Le binaire est construit par le workflow à `build/windows-x64/Release/KravatekKickLab.exe`.
+## À essayer ensemble
 
-Le second paquet **Windows-test-results** fait **190 Ko**, digest GitHub `sha256:2393099c2ccd99981e57595122762db9b234fd652b71dc2bb7149e83d10a4bda`. Il conserve les résultats CTest et le rapport/capture de l'interface Windows.
-
-Le statut, le commit, la durée, la présence et les métadonnées des artefacts ont été vérifiés sur le site public GitHub. **Les archives Windows n'ont pas été téléchargées dans le cloud et leurs digests n'ont pas été recalculés localement** : le téléchargement des artefacts demande une session GitHub. Le créateur peut ouvrir l'exécution ci-dessus, télécharger le paquet dans Artifacts, le décompresser et lancer l'exécutable. La première refonte (avant correction finale de phase) avait également réussi [l'exécution #4](https://github.com/emilien-behague/Kravatek/actions/runs/38724708360) ; utiliser le paquet de **#5**.
-
-## À valider ensemble
-
-L'écoute sur une sortie physique Windows, les dialogues natifs OPEN/SAVE/EXPORT et l'import FL Studio ne sont pas vérifiés dans le cloud. La pertinence musicale des familles, du punch, du sub et des mutations nécessite une écoute en contexte. La saisie au clavier, les petits écrans et les périphériques propres au PC du créateur méritent également un essai réel.
-
-Le rendu reste effectué sur le thread d'interface, hors callback ; sa réactivité sur un PC moins puissant est une limite à surveiller. Le prompteur, les enveloppes multipoints libres, le multibande, l'import de samples et le VST3 ne sont pas implémentés.
+Sur ton PC Windows : sortie audio, dialogues natifs, confort de la fenêtre, écoute A/B et import WAV dans FL Studio. En contexte musical : grave Deep, articulation Hard Psy avec la basse, grain Schranz et intérêt des mutations. Les premiers solos/préécoutes peuvent brièvement bloquer l'interface, la bibliothèque est limitée à 512 états, les courbes restent paramétriques. IA/prompteur, VST3, import de samples et multibande sont absents.

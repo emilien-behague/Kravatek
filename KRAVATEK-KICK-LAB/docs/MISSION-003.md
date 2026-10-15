@@ -70,7 +70,7 @@ Le test GUI a réellement exécuté : génération de 20 EXPERIMENTAL à 75 %, v
 - `src/app/Main`, `MainComponent`, `InstrumentStyle`, `Windows.rc` : intégration, compatibilité, marque et interface.
 - `src/dsp/WavWriter`, `src/app/PresetState`, `src/cli/GeneticMain` : export partagé et sauvegarde exacte, CLI génétique.
 - `tests/GeneticTests`, `StateTests`, `LegacyChecks`, `CMakeLists.txt` : vérifications des lots et intégration.
-- `tools/run_cloud_smoke.py`, `build-windows.cmd`, `.github/workflows/windows.yml`, README et documentation : validation reproductible et livraison.
+- `tools/run_cloud_smoke.py`, `tools/validate_genetic_exports.py`, `build-windows.cmd`, `.github/workflows/windows.yml`, README et documentation : validation reproductible et livraison.
 
 ## Limites explicites
 

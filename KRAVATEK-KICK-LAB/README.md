@@ -1,59 +1,61 @@
-# KRAVATEK KICK LAB — 0.2
+# KRAVA-KICK LAB — 0.3
 
 **KEEP THE DNA. EVOLVE THE SOUND.**
 
-Instrument autonome de synthèse de kicks pour Windows 10/11 x64, en C++20/JUCE. La 0.2 ajoute un moteur multicouche, 24 paramètres, huit bases sonores, des enveloppes éditables et une exploration reproductible. Aucun sample externe n'est nécessaire.
+Instrument autonome de synthèse de kicks pour Windows 10/11 x64, en C++20/JUCE. Le moteur génétique ajoute quatre couches réellement indépendantes, cinq modes de génération, des populations reproductibles et une bibliothèque avec parents/enfants. Aucun sample externe n'est nécessaire. L'ancien moteur reste accessible dans CLASSIC 0.2.
 
-![Interface réelle KRAVATEK 0.2](docs/images/instrument-002.png)
+![Capture réelle KRAVA-KICK LAB 0.3](docs/images/instrument-003.png)
 
-## Démarrer sous Windows
+## Ouvrir sous Windows
 
-1. Ouvre [GitHub Actions](https://github.com/emilien-behague/Kravatek/actions), puis la dernière exécution **Windows instrument 0.2** réussie.
-2. Télécharge **KRAVATEK-KICK-LAB-Windows-x64** dans **Artifacts**, en étant connecté à GitHub.
-3. Décompresse l'archive et double-clique sur **KravatekKickLab.exe**. Aucun code à modifier, aucune installation de JUCE à effectuer.
+1. Ouvre [GitHub Actions](https://github.com/emilien-behague/Kravatek/actions), puis la dernière exécution **Windows genetic lab 0.3** réussie.
+2. Dans **Artifacts**, télécharge **KRAVA-KICK-LAB-Windows-x64**, en étant connecté à GitHub.
+3. Décompresse l'archive et ouvre **KravaKickLab.exe**. Aucun code à écrire, aucune installation de JUCE.
 
-Le paquet contient l'application, huit WAV d'exemple dans `Examples`, le guide `LIRE-MOI.md` et l'outil développeur `kravatek-render.exe`. Le [rapport de validation](docs/VALIDATION.md) distingue compilations exécutées et vérifications restantes.
+Le paquet contient l'application, `LIRE-MOI.md`, les outils CLI et les exemples WAV avec paramètres associés. Le [rapport de validation](docs/VALIDATION.md) précise l'exécution réellement vérifiée et ce qui reste à essayer sur ton PC.
 
-## Créer et retrouver un son
+## Ton premier parcours génétique
+
+1. Dans GENETIC LAB, choisis **EXPERIMENTAL**, **NOVELTY 75 %**, **COUNT 20** puis **GENERATE**.
+2. Double-clique sur les cartes pour écouter. Sélectionne ton préféré.
+3. Active **LOCK SUB** et **LOCK ATTACK**, règle **COUNT 8**, puis **EVOLVE**.
+4. Sélectionne une variante. **SET A** et **SET B** assignent deux sons ; **A >**, **B >** ou **A/B** les jouent. Active **MATCH RMS** pour ajuster les niveaux de préécoute ; désactive-le pour entendre les niveaux réels.
+5. **SAVE** conserve la bibliothèque et sa filiation. **EXPORT WAV**, avec **WAV + JSON** activé, enregistre le mix et ses paramètres reproductibles. Glisse le WAV dans FL Studio.
+
+## Commandes et garanties
 
 | Commande | Action réelle |
 | --- | --- |
-| Famille | Charge une base fixe : Foundation, Warehouse, Hard Psy, Schranz, Hardcore, Deep, Experimental ou Mutant |
-| PLAY / espace | Écoute le rendu ; en LOOP, un deuxième appui arrête |
-| PITCH / AMP | Affiche la courbe du body. Glisse les trois points pour régler le pitch ou l'amplitude ; WAVE affiche/masque le rendu final |
-| Six modules | Pitch, amplitude, corps harmonique/FM-PM, tail indépendante, filtre/waveshaping, attaque et sub propre |
-| GENERATE | Nouvelle base à partir de la famille, de NOVELTY et d'une nouvelle graine |
-| REGENERATE | Reproduit famille + graine saisie + NOVELTY ; les éditions manuelles exigent une sauvegarde complète |
-| NOVELTY | Ouvre progressivement des régions de paramètres expérimentales ; ce n'est pas une mesure de l'originalité |
-| EVOLVE | Transforme le son courant selon son amplitude d'évolution et les groupes DNA déverrouillés |
-| LOCK | Conserve le groupe de paramètres pendant EVOLVE. LOCK SUB protège aussi la fréquence finale et la durée totale |
-| STORE A puis A/B | Mémorise A ; après une modification, alterne A et B avec RMS de préécoute ajusté sur 400 ms |
-| History | Rappelle jusqu'à 24 états de génération de la session ; cette liste n'est pas conservée après fermeture |
-| SAVE / OPEN | Sauvegarde/recharge tous les paramètres, graines, verrous, NOVELTY et tempo dans un preset JSON |
-| EXPORT WAV | Exporte le son courant en mono PCM 24 bits / 48 kHz, crête −3 dBFS ; choisir un nom `.wav` |
-| AUDIO | Choisit/réessaie une sortie audio du système |
+| GENERATE | Lot de 4/8/12/20 nouveaux kicks, selon mode, graine saisie et NOVELTY |
+| REGENERATE | Nouveau candidat avec la graine suivante dérivée de façon déterministe ; mode et NOVELTY conservés |
+| EVOLVE | Variantes du kick sélectionné ; parent conservé, graines effectives et provenance sauvegardées |
+| NOVELTY | Intensité graduelle de l'exploration, pas un pourcentage d'originalité |
+| REFINE | Variations plus petites, architectures conservées, sans rejet des sons proches |
+| DNA LOCK | EVOLVE conserve exactement gènes et signal isolé des couches cochées ; l'édition manuelle reste possible |
+| PITCH / AMP | Trois poignées pilotent les vrais calculs du BODY, dont un point de pitch intermédiaire |
+| Six modules | Pitch, transient, architecture/harmoniques, tail, saturation/filtre BODY et sub indépendant |
+| KEEP EDIT | Ajoute l'édition comme enfant sans écraser l'original ; SAVE/EXPORT/EVOLVE le font aussi automatiquement |
+| LISTEN | Mix ou couche isolée avec forme d'onde correspondante ; l'export reste le mix complet |
+| HISTORY | Retrouve parents et lots précédents, jusqu'à 512 états persistants par session |
+| OPEN / SAVE | Charge/conserve la session complète : gènes, graines, verrous, filiation, sélections A/B et réglages |
+| EXPORT WAV | Mono PCM 24 bits à 44,1 ou 48 kHz ; paramètres exacts intégrés, JSON associé en option |
+| LOOP / PLAY / espace | Écoute au tempo ; nouvel appui arrête la boucle |
+| CANCEL | Arrête le lot entre deux candidats et conserve les résultats déjà calculés |
+| CLASSIC 0.2 | Retrouve les anciennes familles/fonctions ; OPEN reconnaît leurs presets automatiquement |
 
-Chaque potentiomètre propose une valeur éditable et une infobulle en français. Sur petit écran, des barres de défilement gardent les commandes accessibles. Le spectre, la crête, le RMS et la durée proviennent du signal calculé. **F0 TARGET** est la fréquence finale demandée au moteur, pas une détection automatique de fondamentale.
+Les paramètres sans effet pour l'architecture sélectionnée sont désactivés. Les valeurs sont éditables au clavier. Sur petit écran, utilise les barres de défilement. Le spectre, le RMS, la crête et les formes d'onde proviennent de l'audio calculé ; F0 EST est une estimation avec confiance, pas une certitude pour une texture complexe.
 
-Le gain A/B concerne uniquement la préécoute. L'export conserve le rendu d'origine. Le RMS ajusté ne constitue pas une mesure LUFS de sonie perceptuelle. Les interactions et la normalisation du mix peuvent modifier le niveau relatif d'une couche dont les paramètres sont verrouillés.
+Le nouveau moteur n'amplifie pas tous les kicks à une même crête : gain commun fixe et atténuation de sécurité au-delà de −1 dBFS uniquement. A/B ajuste le RMS sur 400 ms, pas la sonie LUFS. Le gain de préécoute ne modifie aucun fichier. Les interactions du mix peuvent modifier la perception d'une couche verrouillée, même si son signal isolé est inchangé.
 
-Pour FL Studio : glisse un WAV exporté dans un Sampler ou la Playlist. Cette version est autonome ; elle ne s'installe pas comme VST3.
+Les quatre couches disposent d'enveloppes, phases et graines indépendantes. Le BODY explore sine/additif/FM-PM/ring ; les transitoires bruit/tonal/harmonique/hybride ; les tails tonale/élastique/résonante/phase warp. Les cinq modes ont leurs propres distributions. Les candidats très proches peuvent déclencher jusqu'à quatre propositions déterministes ; les descripteurs ne constituent pas une preuve de qualité ou d'originalité.
 
-## Ce qu'il reste à tester avec le créateur
+## Limites et essais musicaux
 
-- Comparer Deep, Hard Psy, Schranz, Experimental et Mutant sur la même écoute et dans un morceau.
-- Vérifier la place du kick Hard Psy avec une bassline rapide et la netteté du grave Deep.
-- Verrouiller SUB et ATTACK, faire évoluer la tail, puis comparer A/B.
-- Sauvegarder un son modifié, le rouvrir et exporter vers FL Studio.
-- Vérifier la sortie audio et le dialogue natif d'export sur le PC Windows.
+Teste le poids du sub, la netteté de l'attaque, la place avec ta basse et l'intérêt des mutations sur ton écoute. La sortie Windows, les dialogues natifs et l'import FL Studio doivent être essayés sur ton PC. Le cloud utilise une sortie silencieuse.
 
-PROMPT-TO-KICK est explicitement indisponible. Enveloppes multipoints libres, import de samples, banque persistante, traitement multibande et plugin restent des développements futurs. Aucune équivalence avec un produit commercial ni validation subjective de qualité sonore n'est revendiquée.
+Les lots sont en arrière-plan ; certains premiers rendus de préécoute/solos et l'édition d'un son restent synchrones. Les courbes sont paramétriques, pas multipoints libres. Le prompteur/IA, VST3, import de samples et traitements multibandes ne sont pas développés. L'exactitude binaire exige même moteur, fréquence, plateforme et conditions mathématiques.
 
-## Architecture et validation
-
-L'[audit de la 001](docs/AUDIT-002.md) explique les limites et le périmètre retenu. L'[architecture DSP](docs/ARCHITECTURE.md), le [contrat d'exploration](docs/EXPLORATION.md) et la [direction graphique](docs/DESIGN.md) détaillent ce qui fonctionne réellement.
-
-Le moteur conserve une référence sinusoïdale propre, ajoute FM/PM, harmoniques, bruit d'attaque, saturation tanh/sine-fold suréchantillonnée, tail modulée, filtre résonant à topologie préservée et sub à fréquence fixe. Le callback audio utilise des buffers préalloués, sans allocation ni verrou.
+L'[audit et le suivi des lots](docs/MISSION-003.md), l'[architecture](docs/ARCHITECTURE.md), le [contrat d'exploration](docs/EXPLORATION.md) et la [direction graphique](docs/DESIGN.md) décrivent les garanties et limites. Les anciennes versions sont conservées dans Git, notamment `archive/pre-mission-003` et `v0.2.0`.
 
 ## Développer dans le cloud
 
@@ -64,36 +66,19 @@ python3 tools/setup_cloud.py
 python3 tools/run_cloud_smoke.py
 ```
 
-Les outils sont installés localement dans `/workspace/.kravatek-tools`. Le premier script compile puis lance les 22 tests. Le second utilise temporairement Xvfb et une sortie ALSA silencieuse, vérifie les interactions et produit `out/cloud-smoke/gui-smoke.json` et `prototype-002.png`. Il n'effectue aucune écoute physique.
-
-Sans interface/JUCE :
+Les outils sont locaux dans `/workspace/.kravatek-tools`. Le premier script prépare les dépendances Debian 13, compile et exécute les 35 tests. Le second teste réellement l'application sous Xvfb/ALSA silencieux, dont le parcours 20 kicks puis 8 mutations ; rapports dans `out/cloud-smoke/`, capture `instrument-003.png`. Il ne valide aucune écoute physique.
 
 ```bash
-cmake --preset dsp-only
-cmake --build --preset dsp-release
-ctest --preset dsp-release
+mkdir -p out
+build-linux/krava-genome-render --mode experimental --seed 778899 --novelty .75 --batch 20 --output out/kick.wav
+build-linux/krava-genome-render --input out/kick.session.json --index 0 --output out/recalled.wav
+build-linux/krava-render --style deep --seed 1 --output out/classic-deep.wav
 ```
 
-Rendu par le même moteur :
-
-```bash
-build-linux/kravatek-render --style deep --seed 1 --output out/deep.wav
-build-linux/kravatek-render --style mutant --seed 424242 --novelty .85 --tail .7 --output out/mutant.wav
-build-linux/kravatek-render --help
-```
-
-Les temps de la CLI sont en millisecondes ; niveaux, morphs et NOVELTY sont en unités 0..1. Les paramètres complets sont inscrits dans les métadonnées du WAV. La reproductibilité binaire concerne une même plateforme et les mêmes conditions mathématiques.
+`krava-genome-render` écrit WAV, `.krava.json` et `.session.json`. La graine seule ne conserve pas les éditions ni toute une filiation ; sauvegarder les paramètres complets. `--help` décrit les options. Le build sans JUCE (`cmake --preset dsp-only`, build/ctest `dsp-release`) couvre les 30 tests DSP ; la persistance et les outils génétiques JSON utilisent JUCE Core.
 
 ## Compiler Windows localement
 
-Prérequis : Visual Studio 2022, charge **Développement Desktop en C++**, MSVC v143, Windows SDK, Git et CMake ≥3.22. Double-cliquer sur `build-windows.cmd` ; le résultat est `build/windows-x64/Release/KravatekKickLab.exe`. Ces outils ne sont pas installés automatiquement sur le PC.
+Visual Studio 2022 avec **Développement Desktop en C++**, MSVC v143, Windows SDK, Git et CMake ≥3.22 sont nécessaires au développement local. Double-clique `build-windows.cmd`, ou utilise les presets `windows-x64` / `windows-release`. Résultat : `build/windows-x64/Release/KravaKickLab.exe`. Tu peux simplement utiliser l'archive déjà compilée à la place.
 
-```powershell
-cmake --preset windows-x64
-cmake --build --preset windows-release
-ctest --preset windows-release
-```
-
-Versions : JUCE **8.0.16-security**, commit `ea77444750de45e036e0279bb0291144bf8e3688` ; CMake **3.31.6**, Ninja **1.11.1.4**, GCC **14.2** pour ce cloud. MinGW n'est pas supporté par JUCE. La version 001 reste dans Git sous `archive/prototype-001`.
-
-JUCE relève de sa licence AGPLv3 ou commerciale : [conditions JUCE 8](https://juce.com/legal/juce-8-licence/). Aucun choix de licence pour les sources propres à KRAVATEK n'est ajouté ici.
+JUCE **8.0.16-security**, commit `ea77444750de45e036e0279bb0291144bf8e3688` ; cloud CMake 3.31.6, Ninja 1.11.1.4, GCC 14.2. MinGW n'est pas supporté par JUCE. JUCE relève de sa licence [AGPLv3 ou commerciale](https://juce.com/legal/juce-8-licence/). Aucun choix de licence supplémentaire pour les sources propres au projet n'est ajouté ici.

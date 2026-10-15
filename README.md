@@ -1,6 +1,6 @@
-# KRAVATEK KICK LAB
+# KRAVA-KICK LAB
 
 **KEEP THE DNA. MUTATE THE SOUND.**
 
-Le prototype C++ / JUCE est dans [`KRAVATEK-KICK-LAB/`](KRAVATEK-KICK-LAB/README.md).
-Ce dépôt contient le moteur de synthèse, l'application autonome, les tests et la compilation Windows x64.
+Instrument de synthèse de kicks et laboratoire génétique C++20/JUCE pour Windows.
+Le [projet et son guide](KRAVATEK-KICK-LAB/README.md), la [capture réelle 0.3](KRAVATEK-KICK-LAB/docs/images/instrument-003.png) et les [résultats exécutés](KRAVATEK-KICK-LAB/docs/VALIDATION.md) sont conservés dans ce dépôt.

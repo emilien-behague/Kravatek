@@ -1,13 +1,11 @@
-# Identité KRAVATEK 0.2
+# Identité KRAVA-KICK LAB 0.3
 
-La mission 002 remplace le traitement néon de la 001 par une identité d'instrument industriel. La référence rose/cyan demeure dans les couleurs fonctionnelles de l'onde et des enveloppes. Le fond graphite, les panneaux mats, le cartouche jaune KRAVATEK et les repères numérotés portent la hiérarchie. Aucun halo ni faux panneau décoratif.
+La correction du créateur est explicite : reprendre l'esprit du visuel bleu électrique quadrillé, rose/cyan et fenêtres rétro, avec le nom **KRAVA-KICK LAB**. La direction graphite/jaune de la 0.2 n'était pas validée. Le nouveau cartouche pixel KRAVA-KICK, les bandeaux en dégradé et les contrôles personnalisés suivent cette référence, sans inventer des fonctions décoratives.
 
-- Header : marque, famille, ouverture/sauvegarde, PLAY, GENERATE, EVOLVE et export.
-- Centre : onde réellement exportée et courbe du **body** ; trois poignées pilotent les paramètres du calcul.
-- Modules : pitch, amplitude du body, corps harmonique, tail, filtre/waveshaping, attaque/sub. Chaque valeur est éditable au clavier, chaque commande a une infobulle.
-- Moniteur : historique des générations de la session, STORE A/A-B, durée, fondamentale **cible**, mesures du rendu et spectre. Le spectre n'est pas une animation décorative.
-- Exploration : tempo, NOVELTY, amplitude EVOLVE, verrou SUB, graine et régénération. Le prompteur est explicitement marqué indisponible.
+- En haut : marque, identité sélectionnée, OPEN/SAVE/KEEP EDIT, PLAY et EXPORT.
+- Centre : courbe BODY réelle avec point intermédiaire, amplitude éditable, onde mix ou couche isolée. Moniteur avec mesures et véritable comparaison A/B.
+- Six modules : PITCH, ATTACK, BODY, TAIL, FX du BODY, SUB. Les architectures sont sélectionnables et les valeurs visibles/éditables. Les paramètres sans effet sont désactivés.
+- GENETIC LAB : mode, graine, taille du lot, NOVELTY, REFINE, actions et bibliothèque avec ondes réelles, graines, générations et RMS.
+- Bas : boucle, tempo, solo, fréquence d'export, MATCH RMS, JSON associé et AUDIO.
 
-Les verrous concernent EVOLVE. GENERATE et REGENERATE repartent d'une famille. Les presets JSON conservent le résultat exact d'une édition ou d'une évolution.
-
-Un viewport avec défilement garde une surface d'instrument d'au moins 1100 × 860 pixels ; sur un petit écran, les commandes restent accessibles sans écraser le graphe. Les contrastes et les boîtes de valeurs priment sur les effets de style. L'appréciation artistique de cette refonte reste à faire avec le créateur.
+La fenêtre contient un viewport : les petites résolutions nécessitent du défilement pour conserver les tailles lisibles. Les bandes de titre structurent les panneaux sans fausses commandes de fermeture. La bibliothèque a son propre défilement. La capture [instrument-003.png](images/instrument-003.png) provient de l'application compilée ; ce n'est pas une maquette. Le jugement artistique final appartient au créateur.

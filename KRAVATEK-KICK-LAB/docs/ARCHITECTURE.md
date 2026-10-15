@@ -1,29 +1,27 @@
-# Architecture 0.2
+# Architecture 0.3
 
-## Moteur sans JUCE
+## Moteurs versionnés
 
-`KickSynth` conserve la voie sinusoïdale de référence. Les paramètres sont validés avant allocation/rendu. Toutes les phases commencent à zéro ; le générateur entier de bruit et les mutations sont déterministes. Les bibliothèques mathématiques peuvent produire des différences de derniers bits entre plateformes.
+Le moteur historique `src/dsp/KickSynth` reste inchangé pour les presets 002 ; CLASSIC 0.2 conserve son éditeur. Le nouveau `src/genetic` ajoute le moteur **KRAVA-GSE-003.1** sans prétendre convertir les anciens sons à l'identique. L'export PCM24 partagé a été comparé à un WAV témoin 002 : résultat identique octet pour octet.
 
-La voie enrichie fonctionne à 4 fois la fréquence de sortie, ou 8 fois en dessous de 24 kHz :
+`Genome` contient l'ensemble des gènes SUB/ATTACK/BODY/TAIL, graines, mode, NOVELTY, version, identité SHA-256 et parents. SplitMix32 fournit les flux déterministes. Chaque couche utilise uniquement ses propres gènes et la fréquence de rendu : phases, bruit, filtres, enveloppes et longueur native indépendants. Le pitch du BODY possède deux segments en fréquence logarithmique à travers un point intermédiaire.
 
-1. Pitch paramétrique du body ; modulation combinée de fréquence et phase par un oscillateur à ratio 1,73, avec décroissance indépendante. Partiels impairs 3/5/7.
-2. Transitoire bruité filtré, enveloppe de body avec attaque et extinction cosinus, décroissance à courbure réglable.
-3. Saturation tanh et morphing vers un sine-fold borné.
-4. Tail à oscillateur propre : ratio, extinction, rebond de pitch, interaction de phase avec un modulateur indépendant à ratio 1,5 du pitch du body et drive évolutif. Le ratio non entier est intégré dans son propre accumulateur afin d’éviter les sauts de phase. Montée cosinus de 12 ms.
-5. Passe-bas résonant à topologie préservée sur body et tail. Damping positif, cutoff borné et sweep exponentiel.
-6. Sub sinusoïdal à la fondamentale cible, mixé **après** le filtre, avec extinction indépendante.
-7. Filtre FIR Blackman centré puis décimation ; tapers de bord, correction DC pondérée et normalisation de crête à −3 dBFS.
+`LayerRenderer` suréchantillonne les traitements non linéaires à 4x (8x sous 24 kHz), puis décime par FIR Blackman. Chaque couche reçoit sa correction DC et ses tapers. Le mix additionne à gain fixe 0,35 et n'applique qu'une atténuation de sécurité si nécessaire au-delà de −1 dBFS. Le suréchantillonnage réduit un risque mesuré d'aliasing ; il ne garantit pas l'absence d'alias pour tous les réglages extrêmes.
 
-Le suréchantillonnage est justifié par une régression spectrale sur saturation ; il ne garantit pas l'absence d'aliasing sur toute combinaison extrême. Le filtre FIR atténue aussi la zone haute (coupure de conception à 0,4 fois la fréquence de sortie). La correction DC et la normalisation portent sur le mix final : verrouiller une couche ne garantit pas sa stricte égalité dans un mix qui change de gain ou d'interaction. Le test d'isolation vérifie son indépendance lorsque le sub est écouté seul.
+`Generator` sépare génération et évolution, avec régions/probabilités propres aux cinq modes, interpolation progressive et architectures distinctes. EVOLVE recopie intégralement les groupes verrouillés. `Population` dérive les graines de lot, propose au plus quatre candidats contre les doublons proches et prend en charge annulation/progression. `Library` stocke des snapshots immuables et déduplique les identités, jusqu'à 512 états.
 
-`Variations` sépare presets, mutation, génération et évolution. Voir [le contrat d'exploration](EXPLORATION.md).
+`Features` analyse le signal réel : crête/RMS/DC, durée effective, périodicité grave estimée avec confiance, énergie par bande et par segment, centre spectral et transient. La similarité est une heuristique documentée dans [MISSION-003](MISSION-003.md), pas un jugement musical.
 
-`Analysis` calcule crête, RMS sur la durée totale, DC, durée et FFT radix-2 de 8192 points, fenêtre Hann sur le début du kick, affichage logarithmique de 64 bandes (maximum spectral de chaque bande, dBFS, plancher −120). La fréquence affichée comme F0 TARGET est la consigne du moteur : aucun détecteur de fondamentale polyphonique n'est revendiqué.
+## Persistance et export
 
-## Lecture et application
+`SessionIO` utilise JUCE Core pour le JSON versionné. Les nombres flottants des gènes sont stockés en chaînes décimales à 17 chiffres significatifs, puis lus par `std::from_chars` : les dernières décimales ne dépendent plus de l'arrondi JSON de JUCE. Types, tailles, versions, plages, identités et filiations locales sont validés avant activation.
 
-`Playback` possède ses buffers avant le callback, communique par atomiques et ne verrouille ni n'alloue pendant le traitement audio. La boucle insère du silence jusqu'au prochain temps ; une tail dépassant ce temps est lissée sur les 5 dernières ms. STOP et retrigger utilisent une courte extinction. Les tests couvrent le séquencement et la concurrence.
+La session conserve bibliothèque complète, génération visible, A/B, verrous et réglages ; le fichier associé à un WAV conserve un génome et sa fréquence. Le WAV intègre également ce JSON. Les parents externes restent référencés par identité ; seule une session contenant les parents peut les rouvrir. Les sauvegardes 002 nouvelles ajoutent `_exact` sans casser la lecture historique.
 
-Le rendu hors ligne est effectué sur le thread d'interface, coalescé par un timer de 30 ms, hors callback. C'est une limite de réactivité à surveiller pour les futurs moteurs plus coûteux. L'export utilise le rendu 48 kHz ; la préécoute recalcule le même moteur à la fréquence réelle du périphérique. A/B compare le RMS sur 400 ms avec silence ajouté pour les kicks plus courts ; seul le plus fort est atténué, sans amplification. Cela égalise l'énergie de cette fenêtre, pas la sonie perceptuelle LUFS.
+## Lecture et interface
 
-`PresetState` sérialise tous les paramètres et graines, verrous, famille, tempo, NOVELTY et EVOLVE avec un schéma versionné et 17 chiffres de précision. L'import refuse les types invalides, champs absents et valeurs hors plages de l'éditeur avant de toucher l'état courant. L'historique contient 24 états de session, sauvegardables individuellement ; il n'est pas une base de données persistante.
+`Playback` conserve ses buffers préalloués et son protocole atomique sans allocation/verrou dans le callback. STOP et retrigger utilisent une courte extinction. La boucle lisse les tails dépassant le prochain temps. Les tests de concurrence et de lecture legacy restent actifs.
+
+`GeneticLab` exécute les lots et les rafraîchissements de bibliothèque dans un `std::jthread` annulable ; les résultats rejoignent le thread graphique via SafePointer/callAsync. Les modifications manuelles sont regroupées par timer et créent un enfant à la validation. Le rendu d'une édition, certains solos et la première préécoute restent synchrones : réactivité à vérifier sur PC lent.
+
+La préécoute est rendue à la fréquence réelle du périphérique ; l'export utilise le choix 44,1/48 kHz. A/B ajuste le RMS sur 400 ms avec silence ajouté, par atténuation du plus fort uniquement. MATCH désactivé rétablit gain 1. Le rendu sauvegardé reste inchangé. Le spectre affiché est la FFT Hann initiale héritée ; les descripteurs d'énergie et de centre spectral analysent l'ensemble du rendu.

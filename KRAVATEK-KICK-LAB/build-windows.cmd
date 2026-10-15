@@ -14,7 +14,7 @@ ctest --preset windows-release
 if errorlevel 1 goto failed
 echo.
 echo Compilation et tests termines.
-echo Application : %CD%\build\windows-x64\Release\KravatekKickLab.exe
+echo Application : %CD%\build\windows-x64\Release\KravaKickLab.exe
 pause
 exit /b 0
 :failed
