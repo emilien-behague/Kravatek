@@ -81,15 +81,40 @@ Locks locksFrom(const var &v) {
   X(startHz)                                                                   \
   X(pivotHz)                                                                   \
   X(endHz)                                                                     \
-  X(pivotTime) X(settleTime) X(curve) X(duration) X(attack) X(release)         \
-      X(ampCurve) X(level) X(harmonics) X(fm) X(fmTime) X(drive) X(fold)       \
-          X(cutoff) X(resonance) X(sweep) X(phase)
+  X(pivotTime)                                                                 \
+  X(settleTime) X(curve) X(duration) X(attack) X(release) X(ampCurve) X(level) \
+      X(harmonics) X(fm) X(fmTime) X(drive) X(fold) X(cutoff) X(resonance)     \
+          X(sweep) X(phase)
 #define TAIL_FIELDS(X)                                                         \
   X(hz)                                                                        \
   X(endHz)                                                                     \
   X(duration)                                                                  \
-  X(decay) X(attack) X(release) X(level) X(motion) X(speed) X(cutoff)          \
-      X(resonance) X(sweep) X(drive) X(phase)
+  X(decay)                                                                     \
+  X(attack) X(release) X(level) X(motion) X(speed) X(cutoff) X(resonance)      \
+      X(sweep) X(drive) X(phase)
+var fxVar(const FxGenes &f) {
+  auto v = object();
+  v->setProperty("kind", static_cast<int>(f.kind));
+#define PUT(fld) v->setProperty(#fld, decimal(f.fld));
+  PUT(stageDrive)
+  PUT(preCut) PUT(postCut) PUT(bias) PUT(multiband) PUT(crossover) PUT(lowDrive)
+      PUT(highDrive) PUT(driveDecay) PUT(driveMotion) PUT(bits) PUT(holdHz)
+#undef PUT
+          return var(v.get());
+}
+FxGenes fxFrom(const var &v) {
+  FxGenes f;
+  const auto k = integer(v, "kind");
+  if (k >= static_cast<unsigned>(DistortionKind::count))
+    throw std::invalid_argument("Invalid distortion");
+  f.kind = static_cast<DistortionKind>(k);
+#define GET(fld) f.fld = real(v, #fld);
+  GET(stageDrive)
+  GET(preCut) GET(postCut) GET(bias) GET(multiband) GET(crossover) GET(lowDrive)
+      GET(highDrive) GET(driveDecay) GET(driveMotion) GET(bits) GET(holdHz)
+#undef GET
+          return f;
+}
 var genomeVar(const Genome &g) {
   auto root = object();
   root->setProperty("engine", g.engine.c_str());
@@ -117,12 +142,34 @@ var genomeVar(const Genome &g) {
 #undef PUT_ATTACK
 #undef PUT_BODY
 #undef PUT_TAIL
-      attack->setProperty("kind", static_cast<int>(g.attack.kind));
+  attack->setProperty("kind", static_cast<int>(g.attack.kind));
   attack->setProperty("seed", static_cast<juce::int64>(g.attack.seed));
   body->setProperty("kind", static_cast<int>(g.body.kind));
   body->setProperty("seed", static_cast<juce::int64>(g.body.seed));
   tail->setProperty("kind", static_cast<int>(g.tail.kind));
   tail->setProperty("seed", static_cast<juce::int64>(g.tail.seed));
+  if (g.engine == universalVersion) {
+    root->setProperty("architecture", static_cast<int>(g.architecture));
+    root->setProperty("character", static_cast<int>(g.character));
+    root->setProperty("profileId", g.profileId.c_str());
+    root->setProperty("profileDigest", g.profileDigest.c_str());
+    root->setProperty("profileRevision",
+                      static_cast<juce::int64>(g.profileRevision));
+    sub->setProperty("renderer", g.sub.renderVersion);
+    sub->setProperty("endHz", decimal(g.sub.endHz));
+    sub->setProperty("glideTime", decimal(g.sub.glideTime));
+    attack->setProperty("renderer", g.attack.renderVersion);
+    body->setProperty("renderer", g.body.renderVersion);
+    body->setProperty("damping", decimal(g.body.damping));
+    body->setProperty("inharmonicity", decimal(g.body.inharmonicity));
+    body->setProperty("noise", decimal(g.body.noise));
+    body->setProperty("fx", fxVar(g.body.fx));
+    tail->setProperty("renderer", g.tail.renderVersion);
+    tail->setProperty("glideTime", decimal(g.tail.glideTime));
+    tail->setProperty("harmonics", decimal(g.tail.harmonics));
+    tail->setProperty("gate", decimal(g.tail.gate));
+    tail->setProperty("fx", fxVar(g.tail.fx));
+  }
   root->setProperty("sub", var(sub.get()));
   root->setProperty("attack", var(attack.get()));
   root->setProperty("body", var(body.get()));
@@ -168,9 +215,10 @@ Genome genomeFrom(const var &root) {
 #undef GET_ATTACK
 #undef GET_BODY
 #undef GET_TAIL
-      const auto ak = integer(attack, "kind"),
-                 bk = integer(body, "kind"), tk = integer(tail, "kind");
-  if (ak >= 4 || bk >= 4 || tk >= 4)
+  const auto ak = integer(attack, "kind"), bk = integer(body, "kind"),
+             tk = integer(tail, "kind");
+  if (ak >= 4 || bk >= (g.engine == universalVersion ? 6u : 4u) ||
+      tk >= (g.engine == universalVersion ? 6u : 4u))
     throw std::invalid_argument("Invalid layer architecture");
   g.attack.kind = static_cast<AttackKind>(ak);
   g.attack.seed = integer(attack, "seed");
@@ -178,6 +226,32 @@ Genome genomeFrom(const var &root) {
   g.body.seed = integer(body, "seed");
   g.tail.kind = static_cast<TailKind>(tk);
   g.tail.seed = integer(tail, "seed");
+  if (g.engine == universalVersion) {
+    const auto ar = integer(root, "architecture"),
+               ch = integer(root, "character");
+    if (ar >= static_cast<unsigned>(Architecture::count) ||
+        ch >= static_cast<unsigned>(Character::count))
+      throw std::invalid_argument("Invalid universal type");
+    g.architecture = static_cast<Architecture>(ar);
+    g.character = static_cast<Character>(ch);
+    g.profileId = text(root, "profileId");
+    g.profileDigest = text(root, "profileDigest");
+    g.profileRevision = integer(root, "profileRevision");
+    g.sub.renderVersion = static_cast<int>(integer(sub, "renderer"));
+    g.attack.renderVersion = static_cast<int>(integer(attack, "renderer"));
+    g.body.renderVersion = static_cast<int>(integer(body, "renderer"));
+    g.tail.renderVersion = static_cast<int>(integer(tail, "renderer"));
+    g.sub.endHz = real(sub, "endHz");
+    g.sub.glideTime = real(sub, "glideTime");
+    g.body.damping = real(body, "damping");
+    g.body.inharmonicity = real(body, "inharmonicity");
+    g.body.noise = real(body, "noise");
+    g.body.fx = fxFrom(body["fx"]);
+    g.tail.glideTime = real(tail, "glideTime");
+    g.tail.harmonics = real(tail, "harmonics");
+    g.tail.gate = real(tail, "gate");
+    g.tail.fx = fxFrom(tail["fx"]);
+  }
   validate(g);
   auto checked = g;
   identify(checked);
@@ -193,8 +267,12 @@ Genome genomeFrom(const var &root) {
 std::string encodeSession(const Session &s) {
   validateSession(s);
   auto root = object();
-  root->setProperty("schema", "KRAVA_SESSION_003");
-  root->setProperty("engine", engineVersion);
+  const bool universal =
+      std::any_of(s.library.entries().begin(), s.library.entries().end(),
+                  [](const Genome &g) { return g.engine == universalVersion; });
+  root->setProperty("schema",
+                    universal ? "KRAVA_SESSION_004" : "KRAVA_SESSION_003");
+  root->setProperty("engine", universal ? universalVersion : engineVersion);
   juce::Array<var> library;
   for (const auto &g : s.library.entries())
     library.add(genomeVar(g));
@@ -226,8 +304,10 @@ Session decodeSession(std::string_view json) {
     throw std::invalid_argument("Session exceeds 16 MiB");
   const auto root = juce::JSON::parse(
       juce::String::fromUTF8(json.data(), static_cast<int>(json.size())));
-  if (!root.isObject() || text(root, "schema") != "KRAVA_SESSION_003" ||
-      text(root, "engine") != engineVersion)
+  if (!root.isObject() || !((text(root, "schema") == "KRAVA_SESSION_003" &&
+                             text(root, "engine") == engineVersion) ||
+                            (text(root, "schema") == "KRAVA_SESSION_004" &&
+                             text(root, "engine") == universalVersion)))
     throw std::invalid_argument("Not a supported KRAVA session");
   Session s;
   const auto *entries = root["library"].getArray();

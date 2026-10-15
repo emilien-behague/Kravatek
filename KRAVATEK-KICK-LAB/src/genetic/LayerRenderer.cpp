@@ -1,4 +1,5 @@
 #include "LayerRenderer.h"
+#include "UniversalDsp.h"
 #include <algorithm>
 #include <cmath>
 #include <numbers>
@@ -103,7 +104,13 @@ Render render(const Genome &genome, double rate, bool retainLayers) {
   const auto &s = genome.sub;
   Oscillator sub{s.phase, highRate};
   result.layers[0] = layer(s.duration, rate, [&](double t, double) {
-    return sub.next(s.hz) * s.level * edge(t, s.duration, s.attack, s.release) *
+    auto hz = s.hz;
+    if (s.renderVersion == 4) {
+      auto x = std::clamp(t / s.glideTime, 0., 1.);
+      x = x * x * (3 - 2 * x);
+      hz = s.hz * std::pow(s.endHz / s.hz, x);
+    }
+    return sub.next(hz) * s.level * edge(t, s.duration, s.attack, s.release) *
            std::exp(-t / s.decay);
   });
   const auto &a = genome.attack;
@@ -137,6 +144,14 @@ Render render(const Genome &genome, double rate, bool retainLayers) {
   Filter bodyFilter;
   Random bodyRandom(b.seed);
   const auto ratio = bodyRandom.between(1.4, 3.8);
+  DistortionChain bodyFx(b.fx, highRate);
+  std::array<Oscillator, 5> modes{{{b.phase, highRate},
+                                   {0, highRate},
+                                   {0, highRate},
+                                   {0, highRate},
+                                   {0, highRate}}};
+  Random modalNoise(b.seed ^ 0x4d4f4441U);
+  double modalLow = 0;
   result.layers[2] = layer(b.duration, rate, [&](double t, double hr) {
     const auto hz = bodyPitchAt(b, t), phase = body.phase,
                mod = bodyMod.next(hz * ratio),
@@ -154,7 +169,39 @@ Render render(const Genome &genome, double rate, bool retainLayers) {
       signal = signal * ((1 - b.harmonics) +
                          b.harmonics * bodyExtra.next(hz * ratio)) +
                depth * .1 * mod;
-    signal = shape(signal * bodyAmplitudeAt(b, t), b.drive, b.fold);
+    if (b.renderVersion == 4 && b.kind == BodyKind::membrane) {
+      constexpr std::array<double, 5> ratios{1, 1.593, 2.135, 2.918, 3.598};
+      signal = 0;
+      for (std::size_t i = 0; i < modes.size(); ++i) {
+        const auto k = static_cast<double>(i);
+        const auto ratio = ratios[i] * (1 + (i ? b.inharmonicity * .08 : 0));
+        signal += modes[i].next(hz * ratio) *
+                  std::exp(-t * (3 + 18 * b.damping) * k) /
+                  std::pow(1 + k, 1.5 - b.harmonics);
+      }
+      modalLow += .08 * (modalNoise.between(-1, 1) - modalLow);
+      signal += modalLow * b.noise * std::exp(-t / .025) * 2;
+    }
+    if (b.renderVersion == 4 && b.kind == BodyKind::saw) {
+      const auto x = phase / twoPi, dt = hz / hr;
+      const auto blep = [&] {
+        if (x < dt) {
+          const auto z = x / dt;
+          return z + z - z * z - 1;
+        }
+        if (x > 1 - dt) {
+          const auto z = (x - 1) / dt;
+          return z * z + z + z + 1;
+        }
+        return 0.;
+      };
+      signal = (1 - b.harmonics) * std::sin(phase) +
+               b.harmonics * (2 * x - 1 - blep());
+    }
+    signal =
+        b.renderVersion == 4
+            ? bodyFx.process(signal * bodyAmplitudeAt(b, t), t, b.drive, b.fold)
+            : shape(signal * bodyAmplitudeAt(b, t), b.drive, b.fold);
     const auto cutoff =
         std::clamp(b.cutoff * std::pow(2.0, b.sweep * std::exp(-t / .08)), 40.0,
                    std::min(18000.0, rate * .4));
@@ -166,8 +213,11 @@ Render render(const Genome &genome, double rate, bool retainLayers) {
   Oscillator tail{q.phase, highRate}, tailMod{0, highRate};
   Filter tailFilter;
   Random tailNoise(q.seed);
+  DistortionChain tailFx(q.fx, highRate);
   result.layers[3] = layer(q.duration, rate, [&](double t, double hr) {
-    const auto progress = 1 - std::exp(-t / .09),
+    const auto progress = q.renderVersion == 4
+                              ? std::clamp(t / q.glideTime, 0., 1.)
+                              : 1 - std::exp(-t / .09),
                base = q.hz * std::pow(q.endHz / q.hz, progress);
     const auto movement =
         q.motion * std::sin(twoPi * q.speed * t) * (1 - std::exp(-t / .02));
@@ -181,13 +231,27 @@ Render render(const Genome &genome, double rate, bool retainLayers) {
       signal = .7 * signal + .3 * tailNoise.between(-1, 1);
     if (q.kind == TailKind::phaseWarp)
       signal = std::sin(phase + 3 * q.motion * modulation);
+    if (q.renderVersion == 4)
+      signal +=
+          q.harmonics * (.3 * std::sin(phase * 3) + .15 * std::sin(phase * 5));
     auto envelope =
         edge(t, q.duration, q.attack, q.release) * std::exp(-t / q.decay);
     if (q.kind == TailKind::elastic)
       envelope *=
           1 - .65 * q.motion +
           .65 * q.motion * std::pow(.5 + .5 * std::cos(twoPi * q.speed * t), 2);
-    signal = shape(signal * envelope, q.drive * (.4 + .6 * progress), 0);
+    if (q.renderVersion == 4 && q.kind == TailKind::gated) {
+      const auto gateStart = q.duration * q.gate;
+      const auto fade = std::clamp(
+          (q.duration - t) / std::max(.001, q.duration - gateStart), 0., 1.);
+      envelope *= fade * fade * (3 - 2 * fade);
+    }
+    if (q.renderVersion == 4 && q.kind == TailKind::reverse)
+      envelope *=
+          std::pow(std::clamp(t / q.duration, 0., 1.), 1 + 3 * q.motion) * 4;
+    signal = q.renderVersion == 4
+                 ? tailFx.process(signal * envelope, t, q.drive, 0)
+                 : shape(signal * envelope, q.drive * (.4 + .6 * progress), 0);
     const auto cutoff =
         std::clamp(q.cutoff * std::pow(2.0, q.sweep * std::exp(-t / .12) +
                                                 (q.kind == TailKind::resonant

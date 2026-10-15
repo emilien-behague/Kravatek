@@ -51,6 +51,10 @@ const char *bodyName(BodyKind k) noexcept {
     return "FM / PM";
   case BodyKind::ring:
     return "RING";
+  case BodyKind::membrane:
+    return "MEMBRANE";
+  case BodyKind::saw:
+    return "BLEP SAW";
   default:
     return "INVALID";
   }
@@ -65,6 +69,10 @@ const char *tailName(TailKind k) noexcept {
     return "RESONANT";
   case TailKind::phaseWarp:
     return "PHASE WARP";
+  case TailKind::gated:
+    return "GATED";
+  case TailKind::reverse:
+    return "REVERSE";
   default:
     return "INVALID";
   }
@@ -74,8 +82,10 @@ void range(double v, double a, double b, const char *name) {
   if (!std::isfinite(v) || v < a || v > b)
     throw std::invalid_argument(name);
 }
-void envelope(double duration, double attack, double release, double level) {
-  range(duration, .008, 1.5, "Layer duration outside .008..1.5 seconds");
+void envelope(double duration, double attack, double release, double level,
+              int version) {
+  range(duration, .008, version == 4 ? 4.0 : 1.5,
+        "Layer duration outside .008..1.5 seconds");
   range(attack, .0001, duration * .4, "Invalid layer attack");
   range(release, .0003, duration * .4, "Invalid layer release");
   range(level, 0, 1, "Invalid layer level");
@@ -85,8 +95,21 @@ void phase(double v) {
 }
 } // namespace
 void validate(const Genome &g, double rate) {
-  if (g.engine != engineVersion)
+  if (g.engine != engineVersion && g.engine != universalVersion)
     throw std::invalid_argument("Unsupported genetic engine version");
+  for (auto v : {g.sub.renderVersion, g.attack.renderVersion,
+                 g.body.renderVersion, g.tail.renderVersion})
+    if ((v != 3 && v != 4) || (g.engine == engineVersion && v != 3))
+      throw std::invalid_argument("Invalid layer renderer version");
+  if (g.architecture < Architecture::analog ||
+      g.architecture >= Architecture::count ||
+      g.character < Character::neutral || g.character >= Character::count ||
+      g.profileId.size() > 80 ||
+      (!g.profileDigest.empty() &&
+       (g.profileDigest.size() != 64 ||
+        g.profileDigest.find_first_not_of("0123456789abcdef") !=
+            std::string::npos)))
+    throw std::invalid_argument("Invalid universal provenance");
   range(rate, 8000, 192000, "Invalid genetic sample rate");
   if (g.mode < Mode::deep || g.mode >= Mode::count)
     throw std::invalid_argument("Invalid genetic mode");
@@ -94,16 +117,17 @@ void validate(const Genome &g, double rate) {
   if (g.parents.size() > 2 || g.generation > 1000000 || g.name.size() > 160)
     throw std::invalid_argument("Invalid provenance");
   for (const auto &parent : g.parents)
-    if (parent.size() != 67 || parent.rfind("K3-", 0) != 0 ||
+    if (parent.size() != 67 ||
+        (parent.rfind("K3-", 0) != 0 && parent.rfind("K4-", 0) != 0) ||
         parent.find_first_not_of("0123456789abcdef", 3) != std::string::npos)
       throw std::invalid_argument("Invalid parent identifier");
   const auto &s = g.sub;
-  envelope(s.duration, s.attack, s.release, s.level);
-  range(s.hz, 25, 100, "Invalid sub frequency");
-  range(s.decay, .015, 1, "Invalid sub decay");
+  envelope(s.duration, s.attack, s.release, s.level, s.renderVersion);
+  range(s.hz, 25, s.renderVersion == 4 ? 400. : 100., "Invalid sub frequency");
+  range(s.decay, .015, s.renderVersion == 4 ? 3. : 1., "Invalid sub decay");
   phase(s.phase);
   const auto &a = g.attack;
-  envelope(a.duration, a.attack, a.release, a.level);
+  envelope(a.duration, a.attack, a.release, a.level, a.renderVersion);
   if (a.kind < AttackKind::noise || a.kind >= AttackKind::count)
     throw std::invalid_argument("Invalid transient architecture");
   range(a.hz, 150, 6000, "Invalid transient frequency");
@@ -111,12 +135,13 @@ void validate(const Genome &g, double rate) {
   range(a.colour, 0, 1, "Invalid transient colour");
   phase(a.phase);
   const auto &b = g.body;
-  envelope(b.duration, b.attack, b.release, b.level);
-  if (b.kind < BodyKind::sine || b.kind >= BodyKind::count)
+  envelope(b.duration, b.attack, b.release, b.level, b.renderVersion);
+  if (b.kind < BodyKind::sine ||
+      b.kind >= (b.renderVersion == 4 ? BodyKind::count : BodyKind::membrane))
     throw std::invalid_argument("Invalid body architecture");
   range(b.startHz, 30, 2000, "Invalid start pitch");
   range(b.pivotHz, 25, 2000, "Invalid intermediate pitch");
-  range(b.endHz, 25, 150, "Invalid end pitch");
+  range(b.endHz, 25, b.renderVersion == 4 ? 400. : 150., "Invalid end pitch");
   range(b.pivotTime, .001, .12, "Invalid pitch pivot time");
   range(b.settleTime, b.pivotTime + .001, .3, "Invalid pitch settle time");
   range(b.curve, .4, 2.5, "Invalid pitch curve");
@@ -131,12 +156,13 @@ void validate(const Genome &g, double rate) {
   range(b.sweep, -4, 4, "Invalid body sweep");
   phase(b.phase);
   const auto &t = g.tail;
-  envelope(t.duration, t.attack, t.release, t.level);
-  if (t.kind < TailKind::tonal || t.kind >= TailKind::count)
+  envelope(t.duration, t.attack, t.release, t.level, t.renderVersion);
+  if (t.kind < TailKind::tonal ||
+      t.kind >= (t.renderVersion == 4 ? TailKind::count : TailKind::gated))
     throw std::invalid_argument("Invalid tail architecture");
   range(t.hz, 25, 800, "Invalid tail frequency");
   range(t.endHz, 25, 800, "Invalid tail final frequency");
-  range(t.decay, .015, 1, "Invalid tail decay");
+  range(t.decay, .015, t.renderVersion == 4 ? 3. : 1., "Invalid tail decay");
   range(t.motion, 0, 1, "Invalid tail motion");
   range(t.speed, 1, 40, "Invalid tail speed");
   range(t.cutoff, 80, 16000, "Invalid tail filter");
@@ -144,6 +170,32 @@ void validate(const Genome &g, double rate) {
   range(t.sweep, -4, 4, "Invalid tail sweep");
   range(t.drive, 0, 30, "Invalid tail drive");
   phase(t.phase);
+  if (g.engine == universalVersion) {
+    range(s.endHz, 25, 400, "Invalid sub glide target");
+    range(s.glideTime, .001, 2, "Invalid sub glide time");
+    range(b.damping, 0, 1, "Invalid membrane damping");
+    range(b.inharmonicity, 0, 1, "Invalid modal spread");
+    range(b.noise, 0, 1, "Invalid body noise");
+    range(t.glideTime, .001, 2, "Invalid tail glide time");
+    range(t.harmonics, 0, 1, "Invalid tail harmonics");
+    range(t.gate, .05, .95, "Invalid tail gate");
+    for (const auto *f : {&b.fx, &t.fx}) {
+      if (f->kind < DistortionKind::soft || f->kind >= DistortionKind::count)
+        throw std::invalid_argument("Invalid distortion model");
+      range(f->stageDrive, 0, 24, "Invalid second stage drive");
+      range(f->preCut, 0, 18000, "Invalid pre filter");
+      range(f->postCut, 0, 18000, "Invalid post filter");
+      range(f->bias, -.8, .8, "Invalid asymmetry");
+      range(f->multiband, 0, 1, "Invalid multiband mix");
+      range(f->crossover, 60, 800, "Invalid crossover");
+      range(f->lowDrive, 0, 24, "Invalid low band drive");
+      range(f->highDrive, 0, 30, "Invalid high band drive");
+      range(f->driveDecay, .005, 2, "Invalid drive envelope");
+      range(f->driveMotion, 0, 1, "Invalid drive motion");
+      range(f->bits, 4, 16, "Invalid bit depth");
+      range(f->holdHz, 500, 48000, "Invalid sample hold rate");
+    }
+  }
 }
 Genome foundation(Mode mode) {
   Genome g;
@@ -278,6 +330,17 @@ std::string canonical(const Genome &g) {
   put(static_cast<int>(t.kind), t.seed, t.hz, t.endHz, t.duration, t.decay,
       t.attack, t.release, t.level, t.motion, t.speed, t.cutoff, t.resonance,
       t.sweep, t.drive, t.phase);
+  if (g.engine == universalVersion) {
+    put(static_cast<int>(g.architecture), static_cast<int>(g.character),
+        g.profileId.size(), g.profileId, g.profileRevision, g.profileDigest);
+    put(s.renderVersion, s.endHz, s.glideTime, a.renderVersion, b.renderVersion,
+        b.damping, b.inharmonicity, b.noise, t.renderVersion, t.glideTime,
+        t.harmonics, t.gate);
+    for (const auto *f : {&b.fx, &t.fx})
+      put(static_cast<int>(f->kind), f->stageDrive, f->preCut, f->postCut,
+          f->bias, f->multiband, f->crossover, f->lowDrive, f->highDrive,
+          f->driveDecay, f->driveMotion, f->bits, f->holdHz);
+  }
   return o.str();
 }
 std::string sha256(const std::string &input) {
@@ -336,6 +399,7 @@ std::string sha256(const std::string &input) {
 }
 void identify(Genome &g) {
   validate(g);
-  g.id = "K3-" + sha256(canonical(g));
+  g.id = std::string(g.engine == universalVersion ? "K4-" : "K3-") +
+         sha256(canonical(g));
 }
 } // namespace kravatek::genetic

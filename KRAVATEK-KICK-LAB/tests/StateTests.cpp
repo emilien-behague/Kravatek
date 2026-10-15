@@ -1,5 +1,6 @@
 #include "dsp/WavWriter.h"
 #include "genetic/SessionIO.h"
+#include "genetic/UniversalDsp.h"
 #include <cmath>
 #include <filesystem>
 #include <fstream>
@@ -45,6 +46,8 @@ void roundtrip() {
   auto s = example();
   for (std::uint32_t i = 0; i < 50; ++i)
     s.library.append(generateGenome(static_cast<Mode>(i % 5), i, i / 49.0));
+  for (int i = 0; i < 6; ++i)
+    s.library.append(universalFoundation(static_cast<Architecture>(i)));
   const auto text = encodeSession(s);
   auto loaded = decodeSession(text);
   check(encodeSession(loaded) == text, "Session JSON is not exactly stable");
@@ -55,6 +58,9 @@ void roundtrip() {
       check(render(s.library.at(i), rate).mix ==
                 render(loaded.library.at(i), rate).mix,
             "Reload changed audio");
+  for (std::size_t i = 52; i < s.library.entries().size(); ++i)
+    check(render(s.library.at(i)).mix == render(loaded.library.at(i)).mix,
+          "Universal JSON changed audio");
   auto single = decodeSession(encodeSound(s.library.at(1), 44100));
   check(single.library.at(0) == s.library.at(1) &&
             single.settings.sampleRate == 44100,
