@@ -73,6 +73,21 @@ void distortion() {
     }
   }
   check(hashes.size() == 8, "Distortion models are aliases");
+  auto tail = universalFoundation(Architecture::tonal);
+  tail.body.level = tail.sub.level = tail.attack.level = 0;
+  tail.tail.fx.kind = DistortionKind::tanh;
+  const auto plain = render(tail).layers[3];
+  tail.tail.fx.kind = DistortionKind::rectify;
+  tail.tail.fx.bias = .4;
+  const auto rectified = render(tail).layers[3];
+  double difference = 0, energy = 0;
+  for (std::size_t i = 0; i < plain.size(); ++i) {
+    difference += std::pow(plain[i] - rectified[i], 2);
+    energy += plain[i] * plain[i];
+  }
+  check(difference / energy > .01, "Tail rectification is only a renamed tanh");
+  tail.tail.fx.bias = .1;
+  check(render(tail).layers[3] != rectified, "Tail rectification mix inactive");
   auto g = universalFoundation(Architecture::distortedHard);
   const auto before = render(g).layers[0];
   g.body.fx.multiband = 1;

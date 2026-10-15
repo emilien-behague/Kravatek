@@ -48,9 +48,11 @@ double DistortionChain::process(double input, double t, double drive,
     y = (std::tanh(x + p.bias) - std::tanh(p.bias)) /
         (1 + std::abs(p.bias) * .2);
     break;
-  case DistortionKind::rectify:
-    y = std::tanh((1 - fold) * x + fold * std::abs(x));
-    break;
+  case DistortionKind::rectify: {
+    const auto amount = std::clamp(std::abs(p.bias) / .8, 0., 1.);
+    const auto mix = amount + (1 - amount) * fold;
+    y = std::tanh((1 - mix) * x + mix * std::abs(x));
+  } break;
   case DistortionKind::digital: {
     clock_ += p.holdHz / rate_;
     if (clock_ >= 1) {

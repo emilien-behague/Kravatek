@@ -99,8 +99,11 @@ void UniversalControls::configure() {
           fx.kind == DistortionKind::digital);
     setup(7, "HOLD RATE", 500, 48000, 1, " Hz", fx.holdHz,
           fx.kind == DistortionKind::digital);
-    setup(8, "ASYMMETRY", -.8, .8, .01, "", fx.bias,
-          fx.kind == DistortionKind::asymmetric);
+    if (fx.kind == DistortionKind::rectify)
+      setup(8, "RECTIFY MIX", 0, 100, .1, " %", std::abs(fx.bias) * 125);
+    else
+      setup(8, "ASYMMETRY", -.8, .8, .01, "", fx.bias,
+            fx.kind == DistortionKind::asymmetric);
     setup(9, "DRIVE ENV", 0, 100, .1, " %", fx.driveMotion * 100);
     setup(10, "ENV DECAY", 5, 2000, 1, " ms", fx.driveDecay * 1000,
           fx.driveMotion > 0);
@@ -168,7 +171,7 @@ void UniversalControls::apply(int i, double v) {
         f.holdHz = v;
         break;
       case 8:
-        f.bias = v;
+        f.bias = f.kind == DistortionKind::rectify ? v * .008 : v;
         break;
       case 9:
         f.driveMotion = v / 100;

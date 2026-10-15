@@ -58,3 +58,10 @@ Le lot A et le premier ensemble du lot B sont livrés avec leur intégration de 
 Le mélange pondéré de deux profils n'est pas développé (lot E). Changer le genre cible avant EVOLVE permet une transformation progressive, mais ne constitue pas un hybride 70/30 de deux genres. Le profil Hybrid Experimental combine des modules, pas deux profils musicaux pondérés. Le MIDI entrant reste à développer ; NEXT NOTE est un outil d'accordage numérique. Pas d'API IA, prompteur, VST3 ni import de samples.
 
 La bibliothèque reste limitée à 512 états. Certaines premières préécoutes, solos et éditions restent synchrones. Les courbes restent paramétriques à trois poignées. Les textures numériques peuvent volontairement générer des artefacts spectraux ; le test d'alias ciblé ne qualifie pas tous les réglages. La qualité musicale, le confort sur le PC du créateur, les dialogues natifs Windows et l'import FL Studio restent à évaluer humainement.
+
+
+## Corrections de livraison
+
+Le catalogue intégré de 36 Ko a été remplacé par un tableau d'octets généré depuis le JSON pour éviter la limite MSVC des grands littéraux. Les tests catalogue/persistance/campagne et GUI ont été réexécutés après ce changement. Le workflow conserve désormais le journal de compilation et expose les erreurs dans ses annotations publiques.
+
+La rectification TAIL ne possédait pas de dosage opérationnel. RECTIFY MIX utilise maintenant le paramètre de shaper propre à chaque couche ; un test vérifie un écart énergétique réel par rapport au tanh et l'effet du dosage. Les traitements GSE/Classic et les profils de référence qui n'utilisent pas ce modèle restent inchangés.
