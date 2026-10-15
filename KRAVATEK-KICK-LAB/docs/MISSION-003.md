@@ -28,3 +28,11 @@ Le PRNG est SplitMix32 : incrément `0x9e3779b9`, mélange `0x21f0aaad`, `0x735a
 Les traitements non linéaires sont calculés à 4x (8x sous 24 kHz), puis décimés par FIR Blackman. Correction DC et extinction sont propres à chaque couche. Mix à gain fixe 0,35 ; atténuation de sécurité uniquement au-delà de −1 dBFS, jamais d'amplification automatique d'un candidat faible. Les buffers isolés restent inchangés lorsque la sécurité du mix intervient.
 
 Les différences de timbre et les mesures ne constituent ni une preuve d'originalité absolue ni une validation musicale. L'écoute sur une sortie physique reste du ressort du producteur.
+
+## Lot B — exploration et descripteurs
+
+Chaque mode possède ses régions de fréquence, durée, harmoniques, FM/PM, drive et tail, et ses probabilités d'architectures. Les flux aléatoires sont séparés par constantes SUB/ATTACK/BODY/TAIL. NOVELTY agit continûment sur l'écart aux fondations et sur une probabilité quadratique de changer d'architecture. Les libellés CONTROLLED (0–30), EXPLORATION (31–70), EXPERIMENTAL (71–100) décrivent cette progression, sans créer trois moteurs discontinus.
+
+Les mesures comprennent crête/RMS/DC, durée au-dessus de −60 dB de la crête, autocorrélation des basses fréquences avec confiance, centre spectral pondéré par la puissance sur l'ensemble du rendu (FFT Hann avec recouvrement), fractions d'énergie <200/200–2000/>2000 Hz, huit segments temporels et énergie/crête des 15 premières ms. La F0 est une estimation de périodicité dominante entre 25 et 150 Hz : les textures complexes peuvent donner un résultat ambigu.
+
+La distance acoustique combine ces descripteurs ; la similarité ajoute la corrélation des formes d'onde alignées au déclenchement. Ces heuristiques ne modélisent pas toute la perception et ne prouvent ni qualité ni originalité. Les variations de niveau restent mesurables. Les tests utilisent des sinusoïdes de référence, le silence et une population de 100 graines fixes rendue aux deux fréquences cibles.

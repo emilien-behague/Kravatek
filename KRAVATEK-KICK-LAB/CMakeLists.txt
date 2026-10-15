@@ -17,7 +17,7 @@ set(KRAVATEK_JUCE_PATH "" CACHE PATH "Existing checkout of the pinned JUCE versi
 find_package(Threads REQUIRED)
 add_library(kravatek_dsp STATIC
     src/dsp/KickSynth.cpp src/dsp/Analysis.cpp src/dsp/Variations.cpp src/dsp/Playback.cpp src/dsp/WavWriter.cpp
-    src/genetic/Genome.cpp src/genetic/LayerRenderer.cpp)
+    src/genetic/Genome.cpp src/genetic/LayerRenderer.cpp src/genetic/Generator.cpp src/genetic/Features.cpp)
 target_include_directories(kravatek_dsp PUBLIC src)
 target_link_libraries(kravatek_dsp PUBLIC Threads::Threads)
 if(MSVC)
@@ -39,9 +39,9 @@ if(KRAVATEK_BUILD_TESTS)
     target_link_libraries(kravatek-tests PRIVATE kravatek_dsp)
     add_executable(krava-genetic-tests tests/GeneticTests.cpp)
     target_link_libraries(krava-genetic-tests PRIVATE kravatek_dsp)
-    foreach(check IN ITEMS genetic-identity genetic-prng genetic-layers)
+    foreach(check IN ITEMS genetic-identity genetic-prng genetic-layers genetic-modes genetic-measures genetic-100)
         add_test(NAME ${check} COMMAND krava-genetic-tests ${check})
-        set_tests_properties(${check} PROPERTIES TIMEOUT 180)
+        set_tests_properties(${check} PROPERTIES TIMEOUT 300 WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/test-output")
     endforeach()
     file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/test-output")
     foreach(check IN ITEMS oscillator pitch reference reproducibility variations sample-rates
