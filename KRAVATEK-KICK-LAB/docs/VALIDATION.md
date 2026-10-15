@@ -17,6 +17,7 @@ Les rapports [001](VALIDATION-001.md) et [0.2](VALIDATION-002.md) restent histor
 - Test GUI réel : parcours 20 EXPERIMENTAL à 75 % → parent sélectionné → 8 mutations SUB+ATTACK exactes → édition → A/B ajusté/réel → solo → sauvegarde/relecture d'une bibliothèque de 31 états → WAV/JSON. Les fonctions CLASSIC 0.2 restent aussi vérifiées. Le petit viewport est parcouru par défilement.
 - Callbacks JUCE exécutés sur une sortie ALSA virtuelle silencieuse ; **aucune écoute physique revendiquée**.
 - Dix exports des cinq modes à 44,1/48 kHz lus indépendamment par `wave`/Python : mono, PCM24, fréquence, longueur, crête, DC et bords vérifiés ; chaque rechargement depuis `.krava.json` produit un WAV identique octet pour octet. Script : `tools/validate_genetic_exports.py`, mesures : `out/examples-003/validation.json`.
+- `tools/setup_cloud.py` réexécuté sur la 0.3 : dépendances locales, build incrémental et 35 tests réussis ; aucune installation système.
 - Workflow Windows contrôlé avec actionlint 1.7.7, sans erreur.
 
 ## Population fixe de 100 candidats
@@ -52,7 +53,13 @@ Les builds et sorties sont ignorés par Git. Les détecteurs mémoire utilisent 
 
 ## Windows
 
-La compilation MSVC x64 de la 0.3 doit être vérifiée après publication. Le chemin cible est `build/windows-x64/Release/KravaKickLab.exe`. Le workflow produit **KRAVA-KICK-LAB-Windows-x64** avec l'exécutable, deux CLI, le guide et les exemples ; la présence et le succès seront consignés ici après l'exécution effective. Ne pas utiliser un résultat 0.2 comme validation 0.3.
+La compilation **[Windows genetic lab 0.3 nº 6](https://github.com/emilien-behague/Kravatek/actions/runs/38736246131)** a **réussi**, en **5 min 15 s**, sur le commit `f8009c491df16d33e3af1c79bda14ad6c1a455d3`. Le workflow a terminé configuration MSVC x64, build Release, suite de 35 tests CTest, validation indépendante PCM24/relecture JSON, test GUI et empaquetage.
+
+Dans **Artifacts**, le paquet **KRAVA-KICK-LAB-Windows-x64** fait **5,71 Mo**, digest publié par GitHub `sha256:ea81b26f5fa1f94cc0e1d3ed486b80d773051ef1670e8b7234e033bf260e8443`. Il contient **KravaKickLab.exe**, les CLI **krava-render.exe** et **krava-genome-render.exe**, **LIRE-MOI.md**, cinq exemples génétiques WAV/JSON, un lot EXPERIMENTAL de 20 et huit exemples Classic. Chemin de l'exécutable dans le job : `build/windows-x64/Release/KravaKickLab.exe` ; il est à la racine de l'archive téléchargée.
+
+Le paquet **Windows-test-results** fait **594 Ko**, digest GitHub `sha256:c0703f8b024d135628e041719127831f3fc0cfc9f3bb3c8bd02310120aa1e1c8`. Il conserve résultats CTest, rapport de population fixe, contrôles PCM24 indépendants, état GUI, sauvegarde de session et capture Windows.
+
+Statut, commit, durée, présence et métadonnées des artefacts vérifiés sur le site public GitHub. **Les archives Windows n'ont pas été téléchargées dans le cloud et leurs digests n'ont pas été recalculés localement** : leur téléchargement demande une session GitHub. Le tag `v0.3.0` inclut ensuite ce rapport sans changement du code testé. Pour essayer : ouvrir le run, télécharger KRAVA-KICK-LAB-Windows-x64 dans Artifacts, décompresser et lancer KravaKickLab.exe.
 
 ## À essayer ensemble
 
