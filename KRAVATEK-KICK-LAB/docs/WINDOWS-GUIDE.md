@@ -1,19 +1,24 @@
-# KRAVA-KICK LAB 0.3 — à essayer
+# KRAVA-KICK LAB 0.4 — Universal Kick Engine
 
-1. Décompresse toute l'archive et ouvre **KravaKickLab.exe**.
-2. Choisis **EXPERIMENTAL**, **NOVELTY 75 %**, **COUNT 20** puis **GENERATE**. Attends les cartes ; CANCEL interrompt entre deux candidats.
-3. Double-clique sur les cartes pour écouter. Clique une fois pour sélectionner ton préféré.
-4. Active **LOCK SUB** et **LOCK ATTACK**, passe COUNT à **8**, puis clique **EVOLVE**. Le parent reste dans HISTORY et les deux couches verrouillées sont conservées exactement.
-5. Sélectionne un son et clique **SET A**, puis un autre et **SET B**. **A >**, **B >** et **A/B** comparent ces sons. **MATCH RMS** ajuste le niveau de préécoute sur 400 ms ; décoche-le pour les niveaux réels. Ce n'est pas une égalisation LUFS.
-6. Glisse les points PITCH/AMP ou les potentiomètres. **KEEP EDIT** conserve l'édition comme enfant. Les paramètres grisés sont inactifs pour l'architecture choisie.
-7. **SAVE** conserve toute la session et ses parents. **OPEN** la retrouve ; tu peux aussi ouvrir un fichier `.krava.json` d'un seul son.
-8. **EXPORT WAV**, avec **WAV + JSON** activé, écrit le mix en PCM 24 bits à 44,1 ou 48 kHz et son fichier de paramètres. Glisse le WAV dans FL Studio. LISTEN permet les solos mais l'export reste le mix complet.
-9. Essaie aussi **DEEP**, **HARD PSY**, **SCHRANZ**, **MUTANT** et **REFINE** pour des variations plus petites. REGENERATE produit un nouveau candidat ; GENERATE avec les mêmes réglages et graine reproduit le lot.
+1. Décompresse entièrement l'archive et ouvre **KravaKickLab.exe**.
+2. Pour comparer immédiatement les huit familles : **OPEN → Examples/Universal/reference.session.json**. Les 24 sons sont déjà dans la bibliothèque. Un clic sélectionne, un double-clic écoute. Désactive **LOOP** pour entendre les longues 808 entièrement.
+3. Choisis **GENRE**, puis **SUBGENRE / PROFILE**. Le navigateur règle les prochaines générations : il ne remplace pas le son déjà sélectionné. Les huit profils actuels sont Classic House, Classic Techno, Full-On Psytrance, Driven Hard Techno, Tonal Hardstyle, Driven Hardcore, Long Tuned 808 et Hybrid Experimental.
+4. Règle **NOVELTY**, **COUNT 4/8/12/20**, puis **GENERATE**. **REGENERATE** produit un nouveau candidat. Même graine de lot et mêmes réglages donnent le même lot dans les mêmes conditions de calcul.
+5. **CHARACTER** transforme le caractère ; **NEXT ARCHITECTURE** force une architecture de synthèse, même hors de l'esthétique habituelle du genre. **NEXT NOTE** accorde les prochains sons. Les noms de notes utilisent les numéros MIDI, mais cette version ne reçoit pas de clavier MIDI.
+6. Sélectionne ton préféré, active **LOCK SUB / ATTACK / BODY / TAIL**, puis **EVOLVE**. Le parent reste intact. Tu peux changer de genre avant EVOLVE pour aller progressivement vers une autre famille ; ce n'est pas encore un mélange pondéré de deux profils.
+7. Pour comparer : sélectionne un son, **SET A** ; sélectionne un autre, **SET B** ; puis **A >**, **B >** ou **A/B**. **MATCH RMS** atténue le plus fort sur une fenêtre de 400 ms. Désactive-le pour les niveaux réels. Les fichiers ne changent pas. Ce n'est pas une égalisation LUFS.
+8. **SYNTH / FX** ouvre les pages BODY FX, TAIL FX et SYNTH/GLIDE : distorsion, pré/postfiltre, seconde saturation, multibande, quantification/sample hold, enveloppe de drive, phase du sub, glides et membrane. Les paramètres grisés sont sans effet dans le contexte choisi. Cliquer en dehors ferme le panneau.
+9. Les potentiomètres et les trois points PITCH/AMP éditent le son. **KEEP EDIT** ajoute un enfant ; SAVE/EXPORT/EVOLVE le font également. Les verrous concernent EVOLVE, pas une édition manuelle volontaire. Les valeurs sont saisissables au clavier.
+10. **SAVE** conserve la session complète. **EXPORT WAV** avec **WAV + JSON** activé écrit du mono PCM 24 bits à 44,1 ou 48 kHz et son fichier de paramètres. Glisse le WAV dans FL Studio.
 
-**PLAY** ou espace écoute ; un deuxième appui arrête LOOP. Si tu n'entends rien, ouvre **AUDIO** et choisis ta sortie. Utilise les barres de défilement sur petit écran. **HISTORY** retrouve les lots et parents précédents ; la session garde au plus 512 états.
+**TAIL > BEAT** signale une durée utile dépassant un temps au tempo choisi. Le lecteur LOOP actuel tronque alors la tail avec une courte extinction : désactive LOOP pour entendre le son complet. Les recommandations BPM des profils ne bloquent aucun genre ; le lecteur accepte 40–400 BPM.
 
-Les exemples du dossier **Examples** sont écoutables directement dans ton logiciel musical. `Experimental-20/kick.session.json` ouvre un lot de 20 dans le laboratoire. Les anciens exemples restent dans `Examples/Classic` ; **CLASSIC 0.2** conserve l'ancien éditeur, et OPEN reconnaît ses presets.
+Si tu n'entends rien, ouvre **AUDIO** et choisis ta sortie. Les barres de défilement donnent accès à l'ensemble sur petit écran. HISTORY retrouve parents et lots ; jusqu'à 512 états par session. Pour repartir au-delà : sauvegarde et ouvre une nouvelle session ou relance l'application.
 
-NOVELTY indique l'intensité d'exploration, pas l'originalité. Les verrous protègent EVOLVE, pas une édition manuelle. Le mix peut changer la perception d'une couche isolée identique. La reproduction exacte nécessite paramètres complets, fréquence, version du moteur et mêmes conditions de calcul.
+**Examples/Universal** contient 48 WAV/JSON (8 profils × 3 graines × 2 fréquences), les mesures CSV et la session de 24 sons. Les exemples GSE 0.3 et Classic sont conservés. Choisis GENRE **GENETIC 0.3** pour les cinq anciens modes ; **CLASSIC 0.2** retrouve l'éditeur historique. Les anciens presets s'ouvrent sans conversion audio forcée.
 
-À évaluer ensemble : poids du sub, attaque, grain, place avec ta basse, intérêt des mutations, lisibilité et confort des commandes. Les tests automatiques vérifient la fiabilité ; ils ne remplacent pas ton écoute. IA/prompteur, VST3, import de samples et multibande ne sont pas disponibles.
+NOVELTY n'est pas un score d'originalité. Les verrous préservent les signaux isolés ; les autres couches peuvent en changer la perception dans le mix. La reproduction exacte demande paramètres complets, version du moteur, fréquence et mêmes conditions mathématiques. Une graine seule ne remplace pas SAVE.
+
+À écouter ensemble : rondeur House, articulation Psy avec une bassline, agressivité Hard Techno/Hardcore, tonalité Hardstyle, longueur/glide des 808 et intérêt des mutations. Les mesures ne valident pas la qualité musicale.
+
+Les profils spécialisés Schranz, Rawstyle, Gabber, Frenchcore et Uptempo, les autres sous-genres, l'hybridation pondérée de deux genres et le MIDI entrant sont les étapes suivantes. Le mode Schranz historique reste disponible. IA/prompteur, VST3 et import de samples ne sont pas développés.

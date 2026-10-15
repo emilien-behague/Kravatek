@@ -9,3 +9,8 @@ La correction du créateur est explicite : reprendre l'esprit du visuel bleu él
 - Bas : boucle, tempo, solo, fréquence d'export, MATCH RMS, JSON associé et AUDIO.
 
 La fenêtre contient un viewport : les petites résolutions nécessitent du défilement pour conserver les tailles lisibles. Les bandes de titre structurent les panneaux sans fausses commandes de fermeture. La bibliothèque a son propre défilement. La capture [instrument-003.png](images/instrument-003.png) provient de l'application compilée ; ce n'est pas une maquette. Le jugement artistique final appartient au créateur.
+
+
+## Extension 0.4
+
+L'identité reste celle de la 0.3. Le STYLE BROWSER s'ajoute entre cartouche et courbes. SYNTH/FX ouvre un panneau à trois pages utilisant les mêmes potentiomètres, valeurs et bandeaux ; les contrôles sans effet sont désactivés. Le moniteur signale les tails dépassant un temps. La marque affiche UNIVERSAL 0.4 et l'identité/version du son reste visible. [Capture réelle 0.4](images/instrument-004.png).

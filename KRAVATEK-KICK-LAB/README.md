@@ -1,84 +1,67 @@
-# KRAVA-KICK LAB — 0.3
+# KRAVA-KICK LAB — 0.4
 
-**KEEP THE DNA. EVOLVE THE SOUND.**
+Premier ensemble **Universal Kick Engine** : huit profils musicaux, six points de départ d'architecture et un moteur génétique reproductible. Application autonome C++20/JUCE pour Windows x64. L'identité bleu quadrillé/rose/cyan est conservée.
 
-Instrument autonome de synthèse de kicks pour Windows 10/11 x64, en C++20/JUCE. Le moteur génétique ajoute quatre couches réellement indépendantes, cinq modes de génération, des populations reproductibles et une bibliothèque avec parents/enfants. Aucun sample externe n'est nécessaire. L'ancien moteur reste accessible dans CLASSIC 0.2.
+![Capture réelle de la 0.4](docs/images/instrument-004.png)
 
-![Capture réelle KRAVA-KICK LAB 0.3](docs/images/instrument-003.png)
+## Ouvrir et écouter
 
-## Ouvrir sous Windows
+1. Ouvre la dernière exécution réussie **Windows universal lab 0.4** dans [GitHub Actions](https://github.com/emilien-behague/Kravatek/actions).
+2. Télécharge **KRAVA-KICK-LAB-Windows-x64** dans Artifacts, en étant connecté à GitHub. Décompresse et ouvre **KravaKickLab.exe**.
+3. **OPEN → Examples/Universal/reference.session.json** charge 24 sons des huit profils pour comparaison immédiate. Désactive LOOP pour les longues tails.
 
-1. Ouvre [GitHub Actions](https://github.com/emilien-behague/Kravatek/actions), puis la dernière exécution **Windows genetic lab 0.3** réussie.
-2. Dans **Artifacts**, télécharge **KRAVA-KICK-LAB-Windows-x64**, en étant connecté à GitHub.
-3. Décompresse l'archive et ouvre **KravaKickLab.exe**. Aucun code à écrire, aucune installation de JUCE.
+Le [guide en français](docs/WINDOWS-GUIDE.md) décrit les commandes sans programmation. Le [rapport de validation](docs/VALIDATION.md) précise le build réellement vérifié et les essais restant à faire sur ton PC.
 
-Le paquet contient l'application, `LIRE-MOI.md`, les outils CLI et les exemples WAV avec paramètres associés. Le [rapport de validation](docs/VALIDATION.md) précise l'exécution réellement vérifiée et ce qui reste à essayer sur ton PC.
+## Profils opérationnels
 
-## Ton premier parcours génétique
+| Famille | Profil de ce premier ensemble | Principaux choix DSP |
+| --- | --- | --- |
+| House | Classic House | Sine/additif discret, attaque tonale, saturation douce, sub contrôlé |
+| Techno | Classic Techno | Corps additif, transient harmonique, enveloppe de drive et tail gated |
+| Psytrance | Full-On Psytrance | Pitch rapide à point intermédiaire, phase contrôlée, durées courtes |
+| Hard Techno | Driven Hard Techno | Harmoniques/FM, asymétrie, double saturation et multibande |
+| Hardstyle | Tonal Hardstyle | Saw PolyBLEP/additif, tail tonale gated et harmoniques |
+| Hardcore | Driven Hardcore | Saw/FM, hard clip, multibande et transitoire hybride |
+| 808 / Hip-hop | Long Tuned 808 | Sub dominant, glide, accordage et décroissances longues |
+| Experimental | Hybrid Experimental | Ring/FM/membrane, quantification/sample hold, tail modulée |
 
-1. Dans GENETIC LAB, choisis **EXPERIMENTAL**, **NOVELTY 75 %**, **COUNT 20** puis **GENERATE**.
-2. Double-clique sur les cartes pour écouter. Sélectionne ton préféré.
-3. Active **LOCK SUB** et **LOCK ATTACK**, règle **COUNT 8**, puis **EVOLVE**.
-4. Sélectionne une variante. **SET A** et **SET B** assignent deux sons ; **A >**, **B >** ou **A/B** les jouent. Active **MATCH RMS** pour ajuster les niveaux de préécoute ; désactive-le pour entendre les niveaux réels.
-5. **SAVE** conserve la bibliothèque et sa filiation. **EXPORT WAV**, avec **WAV + JSON** activé, enregistre le mix et ses paramètres reproductibles. Glisse le WAV dans FL Studio.
+Les probabilités de modules et les plages varient selon le profil ; le genre guide la génération sans imposer un timbre unique. L'architecture forcée et les caractères permettent d'en sortir. La membrane synthétique est aussi accessible par **HYBRID / ACOUSTIC** ; aucune reproduction acoustique parfaitement réaliste n'est revendiquée.
 
-## Commandes et garanties
+## Générer, transformer et conserver
 
-| Commande | Action réelle |
-| --- | --- |
-| GENERATE | Lot de 4/8/12/20 nouveaux kicks, selon mode, graine saisie et NOVELTY |
-| REGENERATE | Nouveau candidat avec la graine suivante dérivée de façon déterministe ; mode et NOVELTY conservés |
-| EVOLVE | Variantes du kick sélectionné ; parent conservé, graines effectives et provenance sauvegardées |
-| NOVELTY | Intensité graduelle de l'exploration, pas un pourcentage d'originalité |
-| REFINE | Variations plus petites, architectures conservées, sans rejet des sons proches |
-| DNA LOCK | EVOLVE conserve exactement gènes et signal isolé des couches cochées ; l'édition manuelle reste possible |
-| PITCH / AMP | Trois poignées pilotent les vrais calculs du BODY, dont un point de pitch intermédiaire |
-| Six modules | Pitch, transient, architecture/harmoniques, tail, saturation/filtre BODY et sub indépendant |
-| KEEP EDIT | Ajoute l'édition comme enfant sans écraser l'original ; SAVE/EXPORT/EVOLVE le font aussi automatiquement |
-| LISTEN | Mix ou couche isolée avec forme d'onde correspondante ; l'export reste le mix complet |
-| HISTORY | Retrouve parents et lots précédents, jusqu'à 512 états persistants par session |
-| OPEN / SAVE | Charge/conserve la session complète : gènes, graines, verrous, filiation, sélections A/B et réglages |
-| EXPORT WAV | Mono PCM 24 bits à 44,1 ou 48 kHz ; paramètres exacts intégrés, JSON associé en option |
-| LOOP / PLAY / espace | Écoute au tempo ; nouvel appui arrête la boucle |
-| CANCEL | Arrête le lot entre deux candidats et conserve les résultats déjà calculés |
-| CLASSIC 0.2 | Retrouve les anciennes familles/fonctions ; OPEN reconnaît leurs presets automatiquement |
+Choisis GENRE / PROFILE, éventuellement CHARACTER / NEXT ARCHITECTURE / NEXT NOTE, puis NOVELTY et COUNT. GENERATE rend 4/8/12/20 candidats en arrière-plan ; CANCEL agit entre candidats. REGENERATE utilise une nouvelle graine déterministe. Sélectionne un parent et active les quatre verrous avant EVOLVE. Les couches verrouillées conservent exactement leurs gènes et leurs buffers isolés, même en provenance de la 0.3.
 
-Les paramètres sans effet pour l'architecture sélectionnée sont désactivés. Les valeurs sont éditables au clavier. Sur petit écran, utilise les barres de défilement. Le spectre, le RMS, la crête et les formes d'onde proviennent de l'audio calculé ; F0 EST est une estimation avec confiance, pas une certitude pour une texture complexe.
+PITCH/AMP et les six modules éditent le son sélectionné. SYNTH/FX expose les chaînes BODY/TAIL et les contrôles de glide/phase/membrane. KEEP EDIT ajoute un enfant ; les parents restent dans HISTORY. SAVE conserve la bibliothèque (512 états maximum), la filiation et la définition du profil courant. WAV+JSON conserve aussi le contexte de génération avec le son exporté.
 
-Le nouveau moteur n'amplifie pas tous les kicks à une même crête : gain commun fixe et atténuation de sécurité au-delà de −1 dBFS uniquement. A/B ajuste le RMS sur 400 ms, pas la sonie LUFS. Le gain de préécoute ne modifie aucun fichier. Les interactions du mix peuvent modifier la perception d'une couche verrouillée, même si son signal isolé est inchangé.
+A/B compare deux choix de la bibliothèque ; MATCH RMS atténue le plus fort sur 400 ms, sans changer les originaux. Ce n'est pas une mesure LUFS. Le moteur utilise un gain fixe puis une atténuation de sécurité uniquement au-delà de −1 dBFS, sans amplifier tous les candidats à une même crête. LISTEN permet les solos ; l'export contient toujours le mix.
 
-Les quatre couches disposent d'enveloppes, phases et graines indépendantes. Le BODY explore sine/additif/FM-PM/ring ; les transitoires bruit/tonal/harmonique/hybride ; les tails tonale/élastique/résonante/phase warp. Les cinq modes ont leurs propres distributions. Les candidats très proches peuvent déclencher jusqu'à quatre propositions déterministes ; les descripteurs ne constituent pas une preuve de qualité ou d'originalité.
+Les longues tails sont autorisées jusqu'à quatre secondes. TAIL > BEAT avertit d'un dépassement : LOOP tronque avec fondu au prochain temps, ONE-SHOT joue la totalité. NEXT NOTE utilise une notation MIDI, sans MIDI entrant. L'export mono PCM24 accepte 44,1/48 kHz. La préécoute utilise la fréquence réelle du périphérique.
 
-## Limites et essais musicaux
+Les cinq modes GENETIC 0.3 et CLASSIC 0.2 restent disponibles ; les anciens fichiers ne sont pas reconvertis de force. Les versions sont conservées dans Git sous `v0.3.0`, `archive/pre-mission-004` et les tags antérieurs.
 
-Teste le poids du sub, la netteté de l'attaque, la place avec ta basse et l'intérêt des mutations sur ton écoute. La sortie Windows, les dialogues natifs et l'import FL Studio doivent être essayés sur ton PC. Le cloud utilise une sortie silencieuse.
+## Profils externes et développement
 
-Les lots sont en arrière-plan ; certains premiers rendus de préécoute/solos et l'édition d'un son restent synchrones. Les courbes sont paramétriques, pas multipoints libres. Le prompteur/IA, VST3, import de samples et traitements multibandes ne sont pas développés. L'exactitude binaire exige même moteur, fréquence, plateforme et conditions mathématiques.
-
-L'[audit et le suivi des lots](docs/MISSION-003.md), l'[architecture](docs/ARCHITECTURE.md), le [contrat d'exploration](docs/EXPLORATION.md) et la [direction graphique](docs/DESIGN.md) décrivent les garanties et limites. Les anciennes versions sont conservées dans Git, notamment `archive/pre-mission-003` et `v0.2.0`.
-
-## Développer dans le cloud
-
-Depuis `/workspace/Kravatek/KRAVATEK-KICK-LAB` :
+Le catalogue versionné est `profiles/core-004.json`. Le paquet Windows le place dans `Profiles/core-004.json` à côté du programme. Au démarrage, l'application valide ce catalogue ; un fichier invalide déclenche un message et le repli sur le catalogue intégré, généré depuis le même JSON à la compilation. La session conserve un snapshot de sa recette ; changer le catalogue ne change pas les gènes audio déjà sauvegardés. Aucun champ ne peut exécuter du code.
 
 ```bash
 python3 tools/setup_cloud.py
 python3 tools/run_cloud_smoke.py
+build-linux/krava-genome-render --list-profiles
+build-linux/krava-genome-render --profile 808.long --note 33 --seed 42 --output out/808.wav
+build-linux/krava-genome-render --profile house.classic --architecture acoustic --character organic --output out/membrane.wav
+python3 tools/validate_genetic_exports.py --renderer build-linux/krava-genome-render --output out/examples-004 --universal
 ```
 
-Les outils sont locaux dans `/workspace/.kravatek-tools`. Le premier script prépare les dépendances Debian 13, compile et exécute les 35 tests. Le second teste réellement l'application sous Xvfb/ALSA silencieux, dont le parcours 20 kicks puis 8 mutations ; rapports dans `out/cloud-smoke/`, capture `instrument-003.png`. Il ne valide aucune écoute physique.
+Créer `out/` avant les rendus. `--profiles FILE.json` charge un catalogue externe ; `--input SESSION.json --index N` restitue un son sauvegardé. `--help` décrit les options. Le moteur GSE reste accessible avec `--mode`, le moteur Classic avec `krava-render --style`.
 
-```bash
-mkdir -p out
-build-linux/krava-genome-render --mode experimental --seed 778899 --novelty .75 --batch 20 --output out/kick.wav
-build-linux/krava-genome-render --input out/kick.session.json --index 0 --output out/recalled.wav
-build-linux/krava-render --style deep --seed 1 --output out/classic-deep.wav
-```
+Les outils cloud restent locaux à `/workspace/.kravatek-tools` (CMake 3.31.6, Ninja 1.11.1.4, GCC 14.2). JUCE 8.0.16-security reste épinglé à `ea77444750de45e036e0279bb0291144bf8e3688`. Le script prépare Debian 13 sans installation système puis compile et lance les 46 tests. Le smoke test utilise Xvfb/ALSA silencieux : aucune écoute physique. Sans JUCE, le preset `dsp-only` couvre les 36 tests DSP. Les profils JSON utilisent JUCE Core.
 
-`krava-genome-render` écrit WAV, `.krava.json` et `.session.json`. La graine seule ne conserve pas les éditions ni toute une filiation ; sauvegarder les paramètres complets. `--help` décrit les options. Le build sans JUCE (`cmake --preset dsp-only`, build/ctest `dsp-release`) couvre les 30 tests DSP ; la persistance et les outils génétiques JSON utilisent JUCE Core.
+Windows : Visual Studio 2022/MSVC v143 + Windows SDK, Git et CMake ≥3.22. `build-windows.cmd` ou les presets `windows-x64` / `windows-release` produisent `build/windows-x64/Release/KravaKickLab.exe`. Utilise simplement l'archive compilée pour jouer. MinGW n'est pas supporté par JUCE. [Licence JUCE : AGPLv3 ou commerciale](https://juce.com/legal/juce-8-licence/).
 
-## Compiler Windows localement
+## Limites et étapes suivantes
 
-Visual Studio 2022 avec **Développement Desktop en C++**, MSVC v143, Windows SDK, Git et CMake ≥3.22 sont nécessaires au développement local. Double-clique `build-windows.cmd`, ou utilise les presets `windows-x64` / `windows-release`. Résultat : `build/windows-x64/Release/KravaKickLab.exe`. Tu peux simplement utiliser l'archive déjà compilée à la place.
+Ce premier ensemble n'implémente pas toute la taxonomie de la mission. Les profils UKE spécialisés Schranz/Rawstyle/Gabber/Frenchcore/Uptempo, DnB/Dubstep et les autres genres, l'hybridation pondérée de deux profils et le MIDI entrant restent à développer. Le mode Schranz 0.3 est conservé. Pas d'IA/prompteur connecté, VST3, import de samples, émulation acoustique réaliste garantie ou enveloppes multipoints libres.
 
-JUCE **8.0.16-security**, commit `ea77444750de45e036e0279bb0291144bf8e3688` ; cloud CMake 3.31.6, Ninja 1.11.1.4, GCC 14.2. MinGW n'est pas supporté par JUCE. JUCE relève de sa licence [AGPLv3 ou commerciale](https://juce.com/legal/juce-8-licence/). Aucun choix de licence supplémentaire pour les sources propres au projet n'est ajouté ici.
+Les premiers rendus de préécoute, certains solos et l'édition d'un son peuvent encore bloquer brièvement l'interface. F0 et similarité sont des estimations ; les textures numériques peuvent produire de l'alias volontaire. Les différences mesurées ne prouvent ni qualité musicale ni originalité. L'écoute physique Windows, les dialogues natifs et FL Studio restent à essayer avec le créateur.
+
+Voir [audit, lots et fichiers modifiés](docs/MISSION-004.md), [architecture](docs/ARCHITECTURE.md), [exploration](docs/EXPLORATION.md), [direction visuelle](docs/DESIGN.md) et [validation](docs/VALIDATION.md).

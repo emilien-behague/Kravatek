@@ -21,3 +21,10 @@ En exploration, une similarité supérieure à 0,985 entraîne jusqu'à quatre p
 ## Futur prompteur — non implémenté
 
 Le futur adaptateur français/anglais devra produire un génome structuré soumis aux mêmes validations et visible avant rendu. Aucun parseur linguistique, IA ou service connecté n'est implémenté. Aucune commande active n'en simule le fonctionnement.
+
+
+## Extension universelle 0.4
+
+Une requête sépare profil versionné complet, architecture forcée éventuelle, caractère, note éventuelle, graine et NOVELTY. Les profils définissent des distributions validées et probabilités de modules ; ils ne mesurent pas la qualité musicale. La recette est sauvegardée avec la session, et avec le contexte associé aux exports graphiques/CLI. Les données du catalogue initial sont aussi intégrées au binaire ; les réglages sauvegardés restent indépendants de sa modification ultérieure.
+
+EVOLVE vers un autre profil interpole les paramètres déverrouillés et sélectionne explicitement les modules structurels. Les verrous incluent la version du rendu par couche. L'évolution inter-genre existe ; le mélange pondéré simultané de deux profils reste un lot suivant. Le futur prompteur pourra produire ces requêtes structurées sans contourner la validation. Aucun prompteur ou service connecté n'est développé.

@@ -25,3 +25,8 @@ La session conserve bibliothèque complète, génération visible, A/B, verrous 
 `GeneticLab` exécute les lots et les rafraîchissements de bibliothèque dans un `std::jthread` annulable ; les résultats rejoignent le thread graphique via SafePointer/callAsync. Les modifications manuelles sont regroupées par timer et créent un enfant à la validation. Le rendu d'une édition, certains solos et la première préécoute restent synchrones : réactivité à vérifier sur PC lent.
 
 La préécoute est rendue à la fréquence réelle du périphérique ; l'export utilise le choix 44,1/48 kHz. A/B ajuste le RMS sur 400 ms avec silence ajouté, par atténuation du plus fort uniquement. MATCH désactivé rétablit gain 1. Le rendu sauvegardé reste inchangé. Le spectre affiché est la FFT Hann initiale héritée ; les descripteurs d'énergie et de centre spectral analysent l'ensemble du rendu.
+
+
+## Extension 0.4 — Universal Kick Engine
+
+Le moteur 004 coexiste avec 003 et 002. Chaque couche porte sa révision de rendu ; les gènes verrouillés anciens restent donc inchangés au niveau des échantillons. Les nouveaux algorithmes, chaînes de distorsion, profils externes, fenêtres spectrales centrées et recettes sont détaillés dans [MISSION-004](MISSION-004.md). L'estimateur UKE analyse une périodicité entre environ 20 et 500 Hz après préfiltrage/decimation vers 4 kHz ; le chemin GSE historique demeure inchangé. Les requêtes universelles sont typées, validées, déterministes et sérialisées avec leur profil complet. La session 004 peut contenir des génomes K3 et K4 ; les anciens fichiers purs 003 conservent leur schéma. L'export de son accepte aussi le contexte de génération. Les buffers lecture/WAV couvrent quatre secondes à 192 kHz ; le choix d'export graphique reste 44,1/48 kHz.

@@ -1,4 +1,4 @@
-name: Windows genetic lab 0.3
+name: Windows universal lab 0.4
 
 on:
   push:
@@ -36,9 +36,11 @@ jobs:
       - name: Build Release
         run: cmake --build --preset windows-release
       - name: DSP, genetic populations, persistence and WAV tests
-        run: ctest --preset windows-release --output-junit test-results-003.xml
+        run: ctest --preset windows-release --output-junit test-results-004.xml
       - name: Independent PCM24 and exact recall checks
         run: python tools/validate_genetic_exports.py --renderer build/windows-x64/Release/krava-genome-render.exe --output build/windows-x64/independent-exports
+      - name: Universal PCM24 and exact profile recall
+        run: python tools/validate_genetic_exports.py --renderer build/windows-x64/Release/krava-genome-render.exe --output build/windows-x64/universal-exports --universal
       - name: GUI functional test
         run: |
           $process = Start-Process -FilePath "build/windows-x64/Release/KravaKickLab.exe" -ArgumentList '--smoke-test build/windows-x64/gui-smoke' -Wait -PassThru
@@ -51,9 +53,13 @@ jobs:
           Copy-Item build/windows-x64/Release/KravaKickLab.exe build/package/
           Copy-Item build/windows-x64/Release/krava-render.exe build/package/
           Copy-Item build/windows-x64/Release/krava-genome-render.exe build/package/
+          New-Item -ItemType Directory -Force build/package/Profiles | Out-Null
+          Copy-Item profiles/core-004.json build/package/Profiles/
           Copy-Item docs/WINDOWS-GUIDE.md build/package/LIRE-MOI.md
           New-Item -ItemType Directory -Force build/package/Examples | Out-Null
           New-Item -ItemType Directory -Force build/package/Examples/Classic | Out-Null
+          New-Item -ItemType Directory -Force build/package/Examples/Universal | Out-Null
+          Copy-Item build/windows-x64/test-output/universal-reference/* build/package/Examples/Universal/
           foreach ($style in @('reference', 'hard-techno', 'hard-psy', 'schranz', 'hardcore', 'deep', 'experimental', 'mutant')) {
             & build/windows-x64/Release/krava-render.exe --style $style --seed 1 --output "build/package/Examples/Classic/$style.wav"
             if ($LASTEXITCODE -ne 0) { throw "WAV generation failed: $style" }
@@ -76,7 +82,9 @@ jobs:
           name: Windows-test-results
           path: |
             KRAVATEK-KICK-LAB/build/windows-x64/Testing/
-            KRAVATEK-KICK-LAB/test-results-003.xml
+            KRAVATEK-KICK-LAB/test-results-004.xml
             KRAVATEK-KICK-LAB/build/windows-x64/test-output/genetic-100-report.json
             KRAVATEK-KICK-LAB/build/windows-x64/gui-smoke/
             KRAVATEK-KICK-LAB/build/windows-x64/independent-exports/validation.json
+            KRAVATEK-KICK-LAB/build/windows-x64/universal-exports/validation.json
+            KRAVATEK-KICK-LAB/build/windows-x64/test-output/universal-reference/*.csv
